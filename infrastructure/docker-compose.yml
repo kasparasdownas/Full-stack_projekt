@@ -1,0 +1,112 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bookingdb}
+      POSTGRES_USER: ${POSTGRES_USER:-booking_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-booking_app} -d ${POSTGRES_DB:-bookingdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bookingdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-booking_app}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-replace-this-with-a-long-development-secret-at-least-32-chars}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      APP_AUTH_COOKIE_NAME: ${APP_AUTH_COOKIE_NAME:-booking_access_token}
+      APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-false}
+      APP_AUTH_COOKIE_SAME_SITE: ${APP_AUTH_COOKIE_SAME_SITE:-Lax}
+      APP_AUTH_COOKIE_MAX_AGE_DAYS: ${APP_AUTH_COOKIE_MAX_AGE_DAYS:-7}
+      APP_SEED_DEMO_DATA: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "8081:8081"
+
+  event-service:
+    build:
+      context: ..
+      dockerfile: services/event-service/Dockerfile
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bookingdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-booking_app}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-replace-this-with-a-long-development-secret-at-least-32-chars}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      APP_AUTH_COOKIE_NAME: ${APP_AUTH_COOKIE_NAME:-booking_access_token}
+      APP_SEED_DEMO_DATA: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "8082:8082"
+
+  booking-service:
+    build:
+      context: ..
+      dockerfile: services/booking-service/Dockerfile
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-bookingdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-booking_app}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-replace-this-with-a-long-development-secret-at-least-32-chars}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      APP_AUTH_COOKIE_NAME: ${APP_AUTH_COOKIE_NAME:-booking_access_token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "8083:8083"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: infrastructure/nginx/Dockerfile
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      booking-service:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:
+

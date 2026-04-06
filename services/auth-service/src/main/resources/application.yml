@@ -1,0 +1,52 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/bookingdb}
+    username: ${SPRING_DATASOURCE_USERNAME:booking_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:booking_app}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  seed:
+    demo-data: ${APP_SEED_DEMO_DATA:true}
+  security:
+    allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:8080}
+    jwt:
+      secret: ${APP_JWT_SECRET:replace-this-with-a-long-development-secret-at-least-32-chars}
+      expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:120}
+    cookie:
+      name: ${APP_AUTH_COOKIE_NAME:booking_access_token}
+      secure: ${APP_AUTH_COOKIE_SECURE:false}
+      same-site: ${APP_AUTH_COOKIE_SAME_SITE:Lax}
+      max-age-days: ${APP_AUTH_COOKIE_MAX_AGE_DAYS:7}
+
