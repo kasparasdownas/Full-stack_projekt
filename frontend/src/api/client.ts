@@ -1,4 +1,6 @@
 import type {
+  BookingCreateRequest,
+  BookingResponse,
   ErrorResponse,
   EventDetail,
   EventSummary,
@@ -82,3 +84,9 @@ export function getEventSeats(eventId: string) {
   return request<SeatAvailability[]>(`/api/events/${eventId}/seats`);
 }
 
+export function createBooking(payload: BookingCreateRequest) {
+  return request<BookingResponse>('/api/bookings', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

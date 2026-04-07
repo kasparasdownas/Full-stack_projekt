@@ -1,4 +1,4 @@
-# Iteration 1 Architecture
+# Iteration 2 Architecture
 
 ## Architectural Summary
 
@@ -6,7 +6,7 @@ The system is implemented as a distributed client/server application with three 
 
 - `auth-service` handles identity, registration, login, JWT cookie issuance, and current-user lookup
 - `event-service` handles event catalogue reads and seat availability reads
-- `booking-service` reserves the booking boundary for iteration 2 and owns the booking table plus the concurrency constraint
+- `booking-service` handles single-seat booking writes and owns the booking table plus the concurrency constraint
 - `frontend` is a React CSR client that consumes REST APIs
 - `nginx` acts as the single entry point for static frontend delivery and reverse proxying
 
@@ -45,7 +45,8 @@ Logical data ownership:
 Responsibilities:
 
 - own booking write boundary
-- expose stub APIs for the next iteration
+- create bookings for authenticated users
+- keep cancellation and history stubbed for a later iteration
 - enforce the shared-database seat uniqueness constraint through schema ownership
 
 Logical data ownership:
@@ -54,7 +55,7 @@ Logical data ownership:
 
 ## Shared Database Strategy
 
-Iteration 1 uses one PostgreSQL database because it is the safest course-project setup while still supporting service decomposition.
+The current implementation uses one PostgreSQL database because it is the safest course-project setup while still supporting service decomposition.
 
 Important implementation note:
 
@@ -67,8 +68,8 @@ Important implementation note:
 The system prevents double booking at the database level using:
 
 - `UNIQUE (event_id, seat_id)` on the `bookings` table
-
-The booking write API is postponed to iteration 2, but the concurrency mechanism is implemented now so the data model is already correct.
+- transactional booking insert logic in `booking-service`
+- event-service read models that derive availability from bookings instead of mutable seat state
 
 ## API Style
 
@@ -90,7 +91,7 @@ HATEOAS is deferred.
 
 ## Frontend Rendering Choice
 
-Iteration 1 deliberately uses CSR with React and Vite:
+The frontend deliberately uses CSR with React and Vite:
 
 - the core flow is authenticated and interaction-heavy
 - SEO is not a primary requirement for the booking dashboard
@@ -114,4 +115,3 @@ SSR remains a possible later enhancement if public marketing pages become a requ
 - event-service behind nginx
 - booking-service behind nginx
 - postgres behind internal network
-

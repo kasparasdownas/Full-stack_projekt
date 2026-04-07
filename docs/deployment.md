@@ -1,13 +1,13 @@
 # Deployment Notes
 
-## Iteration 1 Target
+## Current Target
 
-Iteration 1 targets:
+The current iteration targets:
 
 - local development with separate service processes
 - one-host deployment on Debian 12 using containers
 
-Multi-server deployment is postponed to iteration 2.
+Multi-server deployment is postponed to a later iteration.
 
 ## Services
 
@@ -48,9 +48,8 @@ docker compose -f infrastructure/docker-compose.yml up --build -d
 - `GET /api/events` through the gateway after authenticating
 - frontend landing page through the gateway
 
-## Iteration 1 Runtime Notes
+## Runtime Notes
 
 - The auth service applies the shared schema migrations during startup.
 - The event service seeds events and seats when demo data is enabled.
-- The booking service exposes only stubs in iteration 1 but owns the booking boundary for iteration 2.
-
+- The booking service implements `POST /api/bookings` and keeps cancellation plus history as deferred endpoints.

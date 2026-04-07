@@ -1,10 +1,18 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { ApiError } from '../api/client';
+import { useCreateBookingMutation } from '../features/bookings/useBookings';
 import { useEventQuery, useEventSeatsQuery } from '../features/events/useEvents';
 
 export function EventDetailPage() {
   const { eventId = '' } = useParams();
+  const queryClient = useQueryClient();
   const eventQuery = useEventQuery(eventId);
   const seatsQuery = useEventSeatsQuery(eventId);
+  const bookingMutation = useCreateBookingMutation();
+  const [pendingSeatId, setPendingSeatId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
   if (!eventId) {
     return <div className="panel error-panel">Missing event identifier.</div>;
@@ -16,6 +24,28 @@ export function EventDetailPage() {
 
   if (eventQuery.isError || seatsQuery.isError || !eventQuery.data || !seatsQuery.data) {
     return <div className="panel error-panel">Unable to load this event right now.</div>;
+  }
+
+  async function handleSeatBooking(seatId: string) {
+    setPendingSeatId(seatId);
+    setFeedback(null);
+
+    try {
+      const booking = await bookingMutation.mutateAsync({ eventId, seatId });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['events', eventId] }),
+        queryClient.invalidateQueries({ queryKey: ['events', eventId, 'seats'] }),
+      ]);
+      setFeedback({ kind: 'success', message: `Booked seat ${booking.seatNumber}.` });
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'SEAT_ALREADY_BOOKED') {
+        setFeedback({ kind: 'error', message: 'Seat already booked' });
+      } else {
+        setFeedback({ kind: 'error', message: 'Unable to book this seat right now.' });
+      }
+    } finally {
+      setPendingSeatId(null);
+    }
   }
 
   return (
@@ -51,11 +81,27 @@ export function EventDetailPage() {
           <h2>Seat availability</h2>
         </div>
 
+        {feedback ? (
+          <p className={feedback.kind === 'success' ? 'inline-success' : 'inline-error'} role={feedback.kind === 'success' ? 'status' : 'alert'}>
+            {feedback.message}
+          </p>
+        ) : null}
+
         <div className="seat-grid">
           {seatsQuery.data.map((seat) => (
             <div key={seat.seatId} className={`seat-card ${seat.available ? 'seat-available' : 'seat-booked'}`}>
               <span>{seat.seatNumber}</span>
               <strong>{seat.available ? 'Available' : 'Booked'}</strong>
+              {seat.available ? (
+                <button
+                  className="button button-ghost seat-action"
+                  type="button"
+                  disabled={pendingSeatId === seat.seatId}
+                  onClick={() => void handleSeatBooking(seat.seatId)}
+                >
+                  {pendingSeatId === seat.seatId ? 'Booking...' : 'Book seat'}
+                </button>
+              ) : null}
             </div>
           ))}
         </div>
@@ -63,4 +109,3 @@ export function EventDetailPage() {
     </section>
   );
 }
-

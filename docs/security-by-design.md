@@ -2,7 +2,7 @@
 
 ## Data Categorization
 
-Iteration 1 uses a lightweight FIPS-199 style categorization.
+The current implementation uses a lightweight FIPS-199 style categorization.
 
 | Asset | Confidentiality | Integrity | Availability | Notes |
 | --- | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ Iteration 1 uses a lightweight FIPS-199 style categorization.
 7. An attacker steals a token from browser-accessible storage.
 8. A misconfigured service uses database credentials broader than required.
 
-## Selected Controls for Iteration 1
+## Selected Controls
 
 - JWT authentication in HttpOnly cookies
 - bcrypt password hashing
@@ -36,15 +36,15 @@ Iteration 1 uses a lightweight FIPS-199 style categorization.
 - one-origin gateway deployment through nginx
 - CORS allowlist for non-gateway development
 - database-level unique constraint on `(event_id, seat_id)` in `bookings`
+- transactional booking writes that validate event and seat ownership before insert
 
 ## Deferred Controls
 
 The following are intentionally deferred to later iterations:
 
-- CSRF hardening for authenticated state-changing operations after booking writes are implemented
+- CSRF hardening for authenticated state-changing operations
 - refresh token rotation
 - rate limiting and brute-force protection
 - audit logging for admin actions
 - security headers hardening at the gateway beyond the minimal baseline
 - dependency scanning in CI
-

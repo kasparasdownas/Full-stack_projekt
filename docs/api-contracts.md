@@ -49,6 +49,27 @@
 }
 ```
 
+### BookingCreateRequest
+
+```json
+{
+  "eventId": "uuid",
+  "seatId": "uuid"
+}
+```
+
+### BookingResponse
+
+```json
+{
+  "id": "uuid",
+  "eventId": "uuid",
+  "seatId": "uuid",
+  "seatNumber": "A01",
+  "bookedAt": "2026-05-18T18:00:00Z"
+}
+```
+
 ### ErrorResponse
 
 ```json
@@ -132,11 +153,30 @@ Responses:
 - `404 Not Found` with `ErrorResponse`
 - `401 Unauthorized` with `ErrorResponse`
 
-## Booking API Stubs
+## Booking API
 
-The following endpoints are intentionally present but return `501 Not Implemented` in iteration 1:
+### `POST /api/bookings`
 
-- `POST /api/bookings`
+Request:
+
+```json
+{
+  "eventId": "44444444-4444-4444-4444-444444444444",
+  "seatId": "00000000-0000-0000-0000-000000000001"
+}
+```
+
+Responses:
+
+- `201 Created` with `BookingResponse`
+- `400 Bad Request` with `ErrorResponse`
+- `401 Unauthorized` with `ErrorResponse`
+- `404 Not Found` with `EVENT_NOT_FOUND` or `SEAT_NOT_FOUND`
+- `409 Conflict` with `SEAT_ALREADY_BOOKED`
+
+### Deferred booking endpoints
+
+The following endpoints remain intentionally stubbed and return `501 Not Implemented`:
+
 - `DELETE /api/bookings/{bookingId}`
 - `GET /api/users/me/bookings`
-

@@ -1,14 +1,15 @@
 # Demo Script
 
-## Iteration 1 Demo
+## Iteration 2 Demo
 
 1. Open the landing page.
 2. Register a new user or log in with a seeded demo account.
 3. Show that `/api/auth/me` returns the authenticated profile.
 4. Open the event list.
 5. Open one event detail page.
-6. Show the seat availability list.
-7. Explain that the booking table and unique seat constraint already exist even though booking is deferred to iteration 2.
+6. Book one available seat from the seat list.
+7. Show that the seat refreshes into the booked state.
+8. Optionally repeat from a second user session and show `Seat already booked`.
 
 ## Seeded Accounts
 
@@ -25,6 +26,5 @@ When demo seeding is enabled:
 - one shared PostgreSQL database
 - modular service boundaries
 - JWT cookie authentication
-- database-level concurrency guard for future booking writes
+- database-level concurrency guard actively preventing double booking
 - Docker-based local deployment
-

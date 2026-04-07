@@ -1,6 +1,6 @@
 # Distributed Event Booking System
 
-Iteration 1 of a distributed full-stack event booking platform for the course `62595 Full stack development, operations and distributed systems`.
+Iteration 2 of a distributed full-stack event booking platform for the course `62595 Full stack development, operations and distributed systems`.
 
 This repository implements:
 
@@ -16,11 +16,11 @@ This repository implements:
 - `frontend` React CSR application
 - `services/auth-service` registration, login, JWT cookie auth, profile endpoint
 - `services/event-service` event list, event detail, seat availability read APIs
-- `services/booking-service` booking API skeleton and DB constraint guardrails
+- `services/booking-service` single-seat booking write API plus deferred cancellation and history endpoints
 - `infrastructure` nginx, compose, and deployment artifacts
 - `docs` architecture, API, security, and demo documentation
 
-## Iteration 1 Scope
+## Current Scope
 
 Delivered user flow:
 
@@ -28,10 +28,10 @@ Delivered user flow:
 2. browse seeded demo events
 3. open an event
 4. view seat availability
+5. book one available seat
 
-Deferred to iteration 2:
+Still deferred:
 
-- user booking flow
 - cancellation
 - booking history UI
 - admin UI
@@ -56,10 +56,10 @@ Implemented:
 - `GET /api/events`
 - `GET /api/events/{eventId}`
 - `GET /api/events/{eventId}/seats`
-
-Stubbed for iteration 2:
-
 - `POST /api/bookings`
+
+Still stubbed:
+
 - `DELETE /api/bookings/{bookingId}`
 - `GET /api/users/me/bookings`
 
@@ -93,7 +93,7 @@ mvn -pl services/event-service spring-boot:run
 mvn -pl services/booking-service spring-boot:run
 ```
 
-Run the auth service first in iteration 1 because it applies the shared schema migrations for the shared database.
+Run the auth service first because it applies the shared schema migrations for the shared database.
 
 ## Docker Compose
 
@@ -113,4 +113,3 @@ The gateway serves the frontend and proxies API traffic to the backend services.
 - [Deployment](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/deployment.md)
 - [Demo Script](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/demo.md)
 - [Postman Collection](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/postman/iteration-1.postman_collection.json)
-

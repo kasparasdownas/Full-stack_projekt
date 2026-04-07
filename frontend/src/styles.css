@@ -163,6 +163,12 @@ h2 {
   transform: translateY(-1px);
 }
 
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
 .button-primary {
   background: #1b2231;
   color: white;
@@ -236,6 +242,10 @@ input:focus {
   color: #a61b1b;
 }
 
+.inline-success {
+  color: #0f766e;
+}
+
 .stack {
   gap: 1.2rem;
 }
@@ -301,6 +311,11 @@ input:focus {
   border: 1px solid rgba(27, 34, 49, 0.08);
 }
 
+.seat-action {
+  width: 100%;
+  margin-top: 0.2rem;
+}
+
 .seat-available {
   background: rgba(15, 118, 110, 0.09);
 }
@@ -326,4 +341,3 @@ input:focus {
     padding-top: 1.2rem;
   }
 }
-

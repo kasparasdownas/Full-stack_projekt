@@ -31,6 +31,19 @@ export interface SeatAvailability {
   available: boolean;
 }
 
+export interface BookingCreateRequest {
+  eventId: string;
+  seatId: string;
+}
+
+export interface BookingResponse {
+  id: string;
+  eventId: string;
+  seatId: string;
+  seatNumber: string;
+  bookedAt: string;
+}
+
 export interface FieldError {
   field: string;
   message: string;
@@ -52,4 +65,3 @@ export interface RegisterRequest {
   email: string;
   password: string;
 }
-

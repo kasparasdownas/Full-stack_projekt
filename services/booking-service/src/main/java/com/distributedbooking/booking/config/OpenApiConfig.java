@@ -13,7 +13,6 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title("Booking Service API")
                 .version("1.0")
-                .description("Booking API boundary for iteration 1. Public booking writes are deferred."));
+                .description("Booking API for iteration 2. Single-seat booking is implemented, while cancellation and history remain deferred."));
     }
 }
-
