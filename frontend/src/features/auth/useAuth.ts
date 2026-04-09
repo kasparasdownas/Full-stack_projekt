@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getCurrentUser, loginUser, registerUser } from '../../api/client';
+import { getCurrentUser, loginUser, logoutUser, registerUser } from '../../api/client';
 import type { LoginRequest, RegisterRequest } from '../../api/types';
 
 export const authQueryKey = ['auth', 'me'] as const;
@@ -28,3 +28,15 @@ export function useLoginMutation() {
   });
 }
 
+export function useLogoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => logoutUser(),
+    onSuccess: async () => {
+      queryClient.setQueryData(authQueryKey, null);
+      queryClient.removeQueries({ queryKey: ['events'] });
+      await queryClient.invalidateQueries({ queryKey: authQueryKey, refetchType: 'all' });
+    },
+  });
+}

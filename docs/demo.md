@@ -9,7 +9,9 @@
 5. Open one event detail page.
 6. Book one available seat from the seat list.
 7. Show that the seat refreshes into the booked state.
-8. Optionally repeat from a second user session and show `Seat already booked`.
+8. Log out and show that the session returns to the landing page.
+9. Open the events route again and show that the app redirects back to `Log in`.
+10. Optionally repeat from a second user session and show `Seat already booked`.
 
 ## Seeded Accounts
 
@@ -26,5 +28,6 @@ When demo seeding is enabled:
 - one shared PostgreSQL database
 - modular service boundaries
 - JWT cookie authentication
+- logout via cookie clearing
 - database-level concurrency guard actively preventing double booking
 - Docker-based local deployment

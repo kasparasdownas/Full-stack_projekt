@@ -121,6 +121,12 @@ Responses:
 - `200 OK` with `UserProfile` and a JWT HttpOnly cookie
 - `401 Unauthorized` with `ErrorResponse`
 
+### `POST /api/auth/logout`
+
+Responses:
+
+- `204 No Content` and a `Set-Cookie` header clearing the auth cookie
+
 ### `GET /api/auth/me`
 
 Responses:

@@ -51,6 +51,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     );
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return (await response.json()) as T;
 }
 
@@ -69,6 +73,12 @@ export function loginUser(payload: LoginRequest) {
   return request<UserProfile>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+export function logoutUser() {
+  return request<void>('/api/auth/logout', {
+    method: 'POST',
   });
 }
 

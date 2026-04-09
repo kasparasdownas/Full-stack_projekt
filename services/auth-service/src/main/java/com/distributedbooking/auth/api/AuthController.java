@@ -38,22 +38,34 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<UserProfileResponse> login(@Valid @RequestBody LoginRequest request) {
         UserEntity user = authService.authenticate(request);
-        ResponseCookie authCookie = ResponseCookie.from(authCookieProperties.name(), jwtService.generateToken(user))
-                .httpOnly(true)
-                .secure(authCookieProperties.secure())
-                .sameSite(authCookieProperties.sameSite())
-                .path("/")
-                .maxAge(java.time.Duration.ofDays(authCookieProperties.maxAgeDays()))
-                .build();
+        ResponseCookie authCookie = buildAuthCookie(jwtService.generateToken(user), java.time.Duration.ofDays(authCookieProperties.maxAgeDays()));
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, authCookie.toString())
                 .body(UserProfileResponse.from(user));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        ResponseCookie clearedAuthCookie = buildAuthCookie("", java.time.Duration.ZERO);
+
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearedAuthCookie.toString())
+                .build();
+    }
+
     @GetMapping("/me")
     public UserProfileResponse me() {
         return UserProfileResponse.from(authService.currentUser());
     }
-}
 
+    private ResponseCookie buildAuthCookie(String value, java.time.Duration maxAge) {
+        return ResponseCookie.from(authCookieProperties.name(), value)
+                .httpOnly(true)
+                .secure(authCookieProperties.secure())
+                .sameSite(authCookieProperties.sameSite())
+                .path("/")
+                .maxAge(maxAge)
+                .build();
+    }
+}

@@ -69,6 +69,10 @@ input {
   font-size: 0.95rem;
 }
 
+.topbar-button {
+  padding: 0.55rem 0.95rem;
+}
+
 .page-container {
   width: min(1120px, calc(100% - 2rem));
   margin: 0 auto;
@@ -240,6 +244,10 @@ input:focus {
 .inline-error,
 .error-panel {
   color: #a61b1b;
+}
+
+.topbar-error {
+  margin-bottom: 1rem;
 }
 
 .inline-success {

@@ -29,6 +29,7 @@ Delivered user flow:
 3. open an event
 4. view seat availability
 5. book one available seat
+6. log out and clear the auth cookie
 
 Still deferred:
 
@@ -52,6 +53,7 @@ Implemented:
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/events`
 - `GET /api/events/{eventId}`
@@ -69,8 +71,6 @@ Still stubbed:
 - Node.js 20+ or newer
 - Maven 3.9+ for backend builds
 - Docker and Docker Compose for the full local stack
-
-This machine currently does not have Maven or Docker installed, so the repo includes the code and infrastructure, but full verification depends on installing those tools.
 
 ## Frontend Development
 
@@ -100,7 +100,7 @@ Run the auth service first because it applies the shared schema migrations for t
 From [`infrastructure/docker-compose.yml`](/Users/km/Desktop/Desktop/Full-stack_projekt/infrastructure/docker-compose.yml):
 
 ```bash
-docker compose up --build
+docker compose -f infrastructure/docker-compose.yml up --build
 ```
 
 The gateway serves the frontend and proxies API traffic to the backend services.

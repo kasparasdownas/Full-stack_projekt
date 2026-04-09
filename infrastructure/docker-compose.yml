@@ -5,8 +5,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-bookingdb}
       POSTGRES_USER: ${POSTGRES_USER:-booking_app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -109,4 +107,3 @@ services:
 
 volumes:
   postgres-data:
-
