@@ -1,6 +1,6 @@
 # Distributed Event Booking System
 
-Iteration 2 of a distributed full-stack event booking platform for the course `62595 Full stack development, operations and distributed systems`.
+A distributed full-stack event booking platform for the course `62595 Full stack development, operations and distributed systems`.
 
 This repository implements:
 

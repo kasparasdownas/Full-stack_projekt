@@ -13,6 +13,6 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title("Auth Service API")
                 .version("1.0")
-                .description("Authentication API for iteration 3 of the distributed booking platform, including login, logout, and profile lookup."));
+                .description("Authentication API for the distributed booking platform, including login, logout, registration, and profile lookup."));
     }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { FormField } from '../components/FormField';
+import type { LoginNavigationState } from '../features/auth/navigation';
 import { useCurrentUserQuery, useRegisterMutation } from '../features/auth/useAuth';
 
 export function RegisterPage() {
@@ -20,17 +21,21 @@ export function RegisterPage() {
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await registerMutation.mutateAsync({ name, email, password });
-    navigate('/login');
+    const loginState: LoginNavigationState = {
+      registeredEmail: email,
+      registrationSucceeded: true,
+    };
+    navigate('/login', { state: loginState });
   };
 
   return (
     <section className="auth-grid">
       <div className="panel">
-        <p className="eyebrow">Iteration 1</p>
+        <p className="eyebrow">Account access</p>
         <h1>Create account</h1>
         <p className="muted">
-          Registration creates a real user in the auth service. Login is still a separate step because the JWT cookie is
-          issued only by the login endpoint.
+          Registration creates a real user in the auth service. After that, you log in separately to receive the JWT
+          cookie used by the rest of the app.
         </p>
       </div>
 
@@ -69,4 +74,3 @@ export function RegisterPage() {
     </section>
   );
 }
-

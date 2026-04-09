@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { FormField } from '../components/FormField';
+import type { LoginNavigationState } from '../features/auth/navigation';
 import { useCurrentUserQuery, useLoginMutation } from '../features/auth/useAuth';
 
 export function LoginPage() {
@@ -9,18 +10,33 @@ export function LoginPage() {
   const location = useLocation();
   const currentUserQuery = useCurrentUserQuery();
   const loginMutation = useLoginMutation();
+  const locationState = (location.state as LoginNavigationState | null) ?? null;
+  const registeredEmail = locationState?.registeredEmail;
+  const showRegistrationSuccess = locationState?.registrationSucceeded === true;
 
-  const [email, setEmail] = useState('alice@example.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState(registeredEmail ?? 'alice@example.com');
+  const [password, setPassword] = useState(showRegistrationSuccess ? '' : 'Password123!');
+  const [registrationSuccessMessage, setRegistrationSuccessMessage] = useState<string | null>(
+    showRegistrationSuccess ? 'Account created. Log in to continue.' : null,
+  );
 
   if (currentUserQuery.data) {
     return <Navigate to="/events" replace />;
   }
 
+  useEffect(() => {
+    if (!showRegistrationSuccess) {
+      return;
+    }
+
+    const preservedState = locationState?.from ? { from: locationState.from } : null;
+    navigate(location.pathname, { replace: true, state: preservedState });
+  }, [location.pathname, locationState, navigate, showRegistrationSuccess]);
+
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await loginMutation.mutateAsync({ email, password });
-    const redirectTo = (location.state as { from?: string } | null)?.from ?? '/events';
+    const redirectTo = locationState?.from ?? '/events';
     navigate(redirectTo);
   };
 
@@ -48,6 +64,8 @@ export function LoginPage() {
           />
         </FormField>
 
+        {registrationSuccessMessage ? <div className="inline-success">{registrationSuccessMessage}</div> : null}
+
         {loginMutation.error instanceof ApiError ? (
           <div className="inline-error">{loginMutation.error.message}</div>
         ) : null}
@@ -63,4 +81,3 @@ export function LoginPage() {
     </section>
   );
 }
-

@@ -1,6 +1,6 @@
 # Demo Script
 
-## Iteration 2 Demo
+## Current Demo Flow
 
 1. Open the landing page.
 2. Register a new user or log in with a seeded demo account.

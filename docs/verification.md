@@ -1,4 +1,4 @@
-# Iteration 1 Verification
+# Verification
 
 ## Completed locally
 

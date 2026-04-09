@@ -1,4 +1,4 @@
-# Iteration 2 Architecture
+# Architecture
 
 ## Architectural Summary
 
@@ -59,7 +59,7 @@ The current implementation uses one PostgreSQL database because it is the safest
 
 Important implementation note:
 
-- The database schema is migrated centrally during auth-service startup in iteration 1.
+- The database schema is migrated centrally during auth-service startup.
 - Table ownership is still logically documented per service even though the schema bootstrap is centralized.
 - This decision keeps the empty repo bootstrap simple while preserving the intended service boundaries for later iterations.
 

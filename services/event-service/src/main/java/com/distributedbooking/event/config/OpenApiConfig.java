@@ -13,7 +13,6 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title("Event Service API")
                 .version("1.0")
-                .description("Event catalogue and seat availability API for iteration 1."));
+                .description("Event catalogue and seat availability API for the distributed booking platform."));
     }
 }
-

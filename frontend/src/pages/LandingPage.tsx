@@ -4,11 +4,11 @@ export function LandingPage() {
   return (
     <section className="hero">
       <div className="hero-copy">
-        <p className="eyebrow">Iteration 1</p>
-        <h1>Distributed event discovery with a booking-safe data model.</h1>
+        <p className="eyebrow">Distributed booking platform</p>
+        <h1>Browse events and reserve seats without double booking.</h1>
         <p className="hero-text">
-          This first iteration ships the read flow: identity, event browsing, event detail, and live seat
-          availability built on top of the shared schema that will support safe concurrent booking next.
+          The current slice already covers identity, event browsing, live seat availability, and single-seat booking on
+          top of a concurrency-safe shared schema.
         </p>
 
         <div className="hero-actions">
@@ -41,4 +41,3 @@ export function LandingPage() {
     </section>
   );
 }
-

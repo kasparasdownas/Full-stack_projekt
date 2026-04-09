@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Distributed Event Booking System - Iteration 1",
+    "name": "Distributed Event Booking System - Smoke Flow",
     "_postman_id": "f2e870b2-0d27-4de1-817f-67b739342491",
-    "description": "Smoke flow for iteration 1.",
+    "description": "Smoke flow for the current distributed booking slice.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
