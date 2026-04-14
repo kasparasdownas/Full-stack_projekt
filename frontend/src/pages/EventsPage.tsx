@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useEventsQuery } from '../features/events/useEvents';
 
 export function EventsPage() {
   const eventsQuery = useEventsQuery();
+  const [searchTerm, setSearchTerm] = useState('');
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
   if (eventsQuery.isLoading) {
     return <div className="panel">Loading events...</div>;
@@ -16,17 +19,47 @@ export function EventsPage() {
     return <div className="panel">No events are available yet.</div>;
   }
 
+  const filteredEvents = eventsQuery.data.filter((event) => {
+    if (!normalizedSearchTerm) {
+      return true;
+    }
+
+    return (
+      event.title.toLowerCase().includes(normalizedSearchTerm) ||
+      event.venue.toLowerCase().includes(normalizedSearchTerm)
+    );
+  });
+
   return (
     <section className="stack">
       <div className="section-heading">
         <div>
           <p className="eyebrow">Event catalogue</p>
           <h1>Available events</h1>
+          <p className="muted">Search by title or venue to narrow the list.</p>
+        </div>
+        <div className="event-search">
+          <input
+            aria-label="Search events"
+            type="search"
+            placeholder="Search events"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+          {searchTerm ? (
+            <button className="button button-secondary" type="button" onClick={() => setSearchTerm('')}>
+              Clear
+            </button>
+          ) : null}
         </div>
       </div>
 
+      {!filteredEvents.length ? (
+        <div className="panel">No events match your search.</div>
+      ) : null}
+
       <div className="card-grid">
-        {eventsQuery.data.map((event) => (
+        {filteredEvents.map((event) => (
           <article key={event.id} className="panel event-card">
             <div className="event-card-header">
               <div>
@@ -47,4 +80,3 @@ export function EventsPage() {
     </section>
   );
 }
-

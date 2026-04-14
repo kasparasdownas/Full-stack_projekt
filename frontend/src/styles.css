@@ -276,6 +276,17 @@ input:focus {
   gap: 1rem;
 }
 
+.event-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.event-search input {
+  width: min(100%, 280px);
+}
+
 .card-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
