@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { FormField } from '../components/FormField';
+import { DEMO_ACCOUNTS } from '../features/auth/demoAccounts';
 import type { LoginNavigationState } from '../features/auth/navigation';
 import { useCurrentUserQuery, useLoginMutation } from '../features/auth/useAuth';
 
@@ -14,8 +15,8 @@ export function LoginPage() {
   const registeredEmail = locationState?.registeredEmail;
   const showRegistrationSuccess = locationState?.registrationSucceeded === true;
 
-  const [email, setEmail] = useState(registeredEmail ?? 'alice@example.com');
-  const [password, setPassword] = useState(showRegistrationSuccess ? '' : 'Password123!');
+  const [email, setEmail] = useState(registeredEmail ?? '');
+  const [password, setPassword] = useState('');
   const [registrationSuccessMessage, setRegistrationSuccessMessage] = useState<string | null>(
     showRegistrationSuccess ? 'Account created. Log in to continue.' : null,
   );
@@ -49,6 +50,25 @@ export function LoginPage() {
       </div>
 
       <form className="panel form-panel" onSubmit={submit}>
+        <div className="demo-accounts">
+          <span className="field-label">Demo accounts</span>
+          <div className="demo-account-actions">
+            {DEMO_ACCOUNTS.map((account) => (
+              <button
+                key={account.email}
+                className="button button-secondary"
+                type="button"
+                onClick={() => {
+                  setEmail(account.email);
+                  setPassword(account.password);
+                }}
+              >
+                {account.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <FormField label="Email" htmlFor="login-email">
           <input id="login-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </FormField>

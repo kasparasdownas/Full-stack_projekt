@@ -3,7 +3,7 @@
 ## Current Demo Flow
 
 1. Open the landing page.
-2. Register a new user or log in with a seeded demo account.
+2. Register a new user or use a demo-account quick-fill button on the login page.
 3. Show that `/api/auth/me` returns the authenticated profile.
 4. Open the event list.
 5. Open one event detail page.
@@ -15,7 +15,7 @@
 
 ## Seeded Accounts
 
-When demo seeding is enabled:
+When demo seeding is enabled, the login page offers quick-fill buttons for:
 
 - Admin: `admin@example.com` / `Admin123!`
 - User: `alice@example.com` / `Password123!`

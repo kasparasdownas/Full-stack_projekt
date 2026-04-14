@@ -214,6 +214,17 @@ h2 {
   gap: 1rem;
 }
 
+.demo-accounts {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.demo-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .field {
   display: grid;
   gap: 0.45rem;
