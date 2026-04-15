@@ -70,6 +70,20 @@
 }
 ```
 
+### MyBookingSummary
+
+```json
+{
+  "id": "uuid",
+  "eventId": "uuid",
+  "eventTitle": "Spring Concert",
+  "eventDateTime": "2026-05-18T19:30:00Z",
+  "venue": "DTU Hall A",
+  "seatNumber": "A01",
+  "bookedAt": "2026-05-18T18:00:00Z"
+}
+```
+
 ### ErrorResponse
 
 ```json
@@ -180,9 +194,20 @@ Responses:
 - `404 Not Found` with `EVENT_NOT_FOUND` or `SEAT_NOT_FOUND`
 - `409 Conflict` with `SEAT_ALREADY_BOOKED`
 
-### Deferred booking endpoints
+### `GET /api/users/me/bookings`
 
-The following endpoints remain intentionally stubbed and return `501 Not Implemented`:
+Responses:
 
+- `200 OK` with an array of `MyBookingSummary`
+- `401 Unauthorized` with `ErrorResponse`
+
+### `DELETE /api/bookings/{bookingId}`
+
+Responses:
+
+- `204 No Content`
+- `400 Bad Request` with `VALIDATION_ERROR` when the booking id is malformed
+- `401 Unauthorized` with `ErrorResponse`
+- `404 Not Found` with `BOOKING_NOT_FOUND`
 - `DELETE /api/bookings/{bookingId}`
 - `GET /api/users/me/bookings`

@@ -70,12 +70,14 @@ describe('AppShell', () => {
     );
 
     await screen.findByRole('button', { name: 'Log out' });
+    expect(screen.getByRole('link', { name: 'My bookings' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
 
     await waitFor(() => expect(logoutUserMock).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument());
     await waitFor(() => expect(screen.getByRole('link', { name: 'Log in' })).toBeInTheDocument());
     expect(screen.getByRole('link', { name: 'Register' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'My bookings' })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('link', { name: 'Events' }));
 

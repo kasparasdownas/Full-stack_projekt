@@ -36,6 +36,7 @@ export function useLogoutMutation() {
     onSuccess: async () => {
       queryClient.setQueryData(authQueryKey, null);
       queryClient.removeQueries({ queryKey: ['events'] });
+      queryClient.removeQueries({ queryKey: ['bookings'] });
       await queryClient.invalidateQueries({ queryKey: authQueryKey, refetchType: 'all' });
     },
   });

@@ -5,6 +5,7 @@ import { EventDetailPage } from './pages/EventDetailPage';
 import { EventsPage } from './pages/EventsPage';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { MyBookingsPage } from './pages/MyBookingsPage';
 import { RegisterPage } from './pages/RegisterPage';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route element={<ProtectedRoute />}>
+          <Route path="/bookings" element={<MyBookingsPage />} />
           <Route path="/events" element={<EventsPage />} />
           <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Route>
@@ -23,4 +25,3 @@ export default function App() {
     </Routes>
   );
 }
-

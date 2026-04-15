@@ -16,7 +16,7 @@ This repository implements:
 - `frontend` React CSR application
 - `services/auth-service` registration, login, JWT cookie auth, profile endpoint
 - `services/event-service` event list, event detail, seat availability read APIs
-- `services/booking-service` single-seat booking write API plus deferred cancellation and history endpoints
+- `services/booking-service` booking creation, owned booking history, and owned cancellation APIs
 - `infrastructure` nginx, compose, and deployment artifacts
 - `docs` architecture, API, security, and demo documentation
 
@@ -29,12 +29,12 @@ Delivered user flow:
 3. open an event
 4. view seat availability
 5. book one available seat
-6. log out and clear the auth cookie
+6. review active bookings
+7. cancel an owned booking
+8. log out and clear the auth cookie
 
 Still deferred:
 
-- cancellation
-- booking history UI
 - admin UI
 - GraphQL
 - multi-server deployment
@@ -59,11 +59,8 @@ Implemented:
 - `GET /api/events/{eventId}`
 - `GET /api/events/{eventId}/seats`
 - `POST /api/bookings`
-
-Still stubbed:
-
-- `DELETE /api/bookings/{bookingId}`
 - `GET /api/users/me/bookings`
+- `DELETE /api/bookings/{bookingId}`
 
 ## Prerequisites
 

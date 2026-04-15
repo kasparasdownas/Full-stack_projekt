@@ -5,6 +5,7 @@ import type {
   EventDetail,
   EventSummary,
   LoginRequest,
+  MyBookingSummary,
   RegisterRequest,
   SeatAvailability,
   UserProfile,
@@ -98,5 +99,15 @@ export function createBooking(payload: BookingCreateRequest) {
   return request<BookingResponse>('/api/bookings', {
     method: 'POST',
     body: JSON.stringify(payload),
+  });
+}
+
+export function getMyBookings() {
+  return request<MyBookingSummary[]>('/api/users/me/bookings');
+}
+
+export function cancelBooking(bookingId: string) {
+  return request<void>(`/api/bookings/${bookingId}`, {
+    method: 'DELETE',
   });
 }

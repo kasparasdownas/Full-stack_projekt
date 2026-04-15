@@ -51,6 +51,24 @@ public class BookingWriteService {
         return new BookingReservation(bookingId, eventId, seatId, seat.seatNumber(), bookedAt);
     }
 
+    @Transactional
+    public void cancelBooking(UUID userId, UUID bookingId) {
+        int deletedRows = jdbcTemplate.update("""
+                        DELETE FROM bookings
+                        WHERE id = :bookingId
+                          AND user_id = :userId
+                        """,
+                Map.of(
+                        "bookingId", bookingId,
+                        "userId", userId
+                )
+        );
+
+        if (deletedRows == 0) {
+            throw new NotFoundException("BOOKING_NOT_FOUND", "Booking not found");
+        }
+    }
+
     private void ensureEventExists(UUID eventId) {
         Integer eventCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM events WHERE id = :eventId",

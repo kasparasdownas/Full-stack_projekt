@@ -297,6 +297,25 @@ input:focus {
   gap: 1rem;
 }
 
+.booking-card {
+  align-content: start;
+}
+
+.booking-meta {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.booking-meta p {
+  margin: 0;
+}
+
+.booking-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .event-card-header {
   display: flex;
   justify-content: space-between;

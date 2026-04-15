@@ -44,6 +44,16 @@ export interface BookingResponse {
   bookedAt: string;
 }
 
+export interface MyBookingSummary {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  eventDateTime: string;
+  venue: string;
+  seatNumber: string;
+  bookedAt: string;
+}
+
 export interface FieldError {
   field: string;
   message: string;

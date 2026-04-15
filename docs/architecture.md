@@ -46,7 +46,8 @@ Responsibilities:
 
 - own booking write boundary
 - create bookings for authenticated users
-- keep cancellation and history stubbed for a later iteration
+- return the authenticated user’s active bookings
+- cancel owned bookings
 - enforce the shared-database seat uniqueness constraint through schema ownership
 
 Logical data ownership:

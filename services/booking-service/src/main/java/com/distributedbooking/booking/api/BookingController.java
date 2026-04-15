@@ -1,9 +1,11 @@
 package com.distributedbooking.booking.api;
 
 import com.distributedbooking.booking.domain.BookingReservation;
+import com.distributedbooking.booking.domain.BookingQueryService;
 import com.distributedbooking.booking.domain.BookingWriteService;
 import com.distributedbooking.booking.security.AuthenticatedUser;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class BookingController {
 
+    private final BookingQueryService bookingQueryService;
     private final BookingWriteService bookingWriteService;
 
-    public BookingController(BookingWriteService bookingWriteService) {
+    public BookingController(BookingQueryService bookingQueryService, BookingWriteService bookingWriteService) {
+        this.bookingQueryService = bookingQueryService;
         this.bookingWriteService = bookingWriteService;
     }
 
@@ -40,17 +44,18 @@ public class BookingController {
     }
 
     @DeleteMapping("/api/bookings/{bookingId}")
-    public ResponseEntity<ErrorResponse> cancelBooking(@PathVariable String bookingId) {
-        return notImplemented();
+    public ResponseEntity<Void> cancelBooking(
+            @PathVariable UUID bookingId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        bookingWriteService.cancelBooking(UUID.fromString(authenticatedUser.userId()), bookingId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/api/users/me/bookings")
-    public ResponseEntity<ErrorResponse> userBookings() {
-        return notImplemented();
-    }
-
-    private ResponseEntity<ErrorResponse> notImplemented() {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
-                .body(ErrorResponse.of("NOT_IMPLEMENTED", "Booking cancellation and history arrive in a later iteration"));
+    public ResponseEntity<List<MyBookingSummaryResponse>> userBookings(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(bookingQueryService.listUserBookings(UUID.fromString(authenticatedUser.userId())));
     }
 }

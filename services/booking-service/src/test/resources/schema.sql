@@ -10,7 +10,9 @@ CREATE TABLE users (
 
 CREATE TABLE events (
     id UUID PRIMARY KEY,
-    title VARCHAR(160) NOT NULL
+    title VARCHAR(160) NOT NULL,
+    date_time TIMESTAMPTZ NOT NULL,
+    venue VARCHAR(160) NOT NULL
 );
 
 CREATE TABLE seats (
@@ -27,4 +29,3 @@ CREATE TABLE bookings (
     booked_at TIMESTAMPTZ NOT NULL,
     CONSTRAINT uq_bookings_event_seat UNIQUE (event_id, seat_id)
 );
-
