@@ -65,6 +65,41 @@ describe('EventDetailPage', () => {
 
     expect(screen.getByRole('button', { name: 'Book seat' })).toBeInTheDocument();
     expect(screen.getByText('Booked')).toBeInTheDocument();
+    expect(screen.queryByText('Sold out')).not.toBeInTheDocument();
+  });
+
+  it('shows explicit sold-out state when no seats are available', () => {
+    useEventQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: {
+        id: 'event-1',
+        title: 'Spring Concert',
+        description: 'Live student concert.',
+        dateTime: '2026-05-18T19:30:00Z',
+        venue: 'DTU Hall A',
+        seatsTotal: 24,
+        seatsAvailable: 0,
+      },
+    });
+    useEventSeatsQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: [
+        { seatId: 'seat-1', seatNumber: 'A01', available: false },
+        { seatId: 'seat-2', seatNumber: 'A02', available: false },
+      ],
+    });
+
+    const queryClient = new QueryClient();
+
+    renderPage(queryClient);
+
+    expect(screen.getByText('Sold out')).toBeInTheDocument();
+    expect(screen.getByText('Sold out. No seats are currently available for this event.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Book seat' })).not.toBeInTheDocument();
+    expect(screen.getAllByText('Booked')).toHaveLength(2);
+    expect(screen.getByText('0')).toBeInTheDocument();
   });
 
   it('submits a booking request and refreshes event queries after success', async () => {

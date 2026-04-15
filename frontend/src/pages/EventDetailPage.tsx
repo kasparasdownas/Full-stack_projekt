@@ -26,6 +26,8 @@ export function EventDetailPage() {
     return <div className="panel error-panel">Unable to load this event right now.</div>;
   }
 
+  const soldOut = eventQuery.data.seatsAvailable === 0;
+
   async function handleSeatBooking(seatId: string) {
     setPendingSeatId(seatId);
     setFeedback(null);
@@ -58,6 +60,7 @@ export function EventDetailPage() {
         <div>
           <p className="eyebrow">Event detail</p>
           <h1>{eventQuery.data.title}</h1>
+          {soldOut ? <span className="availability-pill availability-pill-alert">Sold out</span> : null}
           <p className="detail-meta">
             {new Date(eventQuery.data.dateTime).toLocaleString()} · {eventQuery.data.venue}
           </p>
@@ -81,6 +84,12 @@ export function EventDetailPage() {
           <h2>Seat availability</h2>
         </div>
 
+        {soldOut ? (
+          <p className="inline-error" role="status">
+            Sold out. No seats are currently available for this event.
+          </p>
+        ) : null}
+
         {feedback ? (
           <p className={feedback.kind === 'success' ? 'inline-success' : 'inline-error'} role={feedback.kind === 'success' ? 'status' : 'alert'}>
             {feedback.message}
@@ -88,22 +97,26 @@ export function EventDetailPage() {
         ) : null}
 
         <div className="seat-grid">
-          {seatsQuery.data.map((seat) => (
-            <div key={seat.seatId} className={`seat-card ${seat.available ? 'seat-available' : 'seat-booked'}`}>
-              <span>{seat.seatNumber}</span>
-              <strong>{seat.available ? 'Available' : 'Booked'}</strong>
-              {seat.available ? (
-                <button
-                  className="button button-ghost seat-action"
-                  type="button"
-                  disabled={pendingSeatId === seat.seatId}
-                  onClick={() => void handleSeatBooking(seat.seatId)}
-                >
-                  {pendingSeatId === seat.seatId ? 'Booking...' : 'Book seat'}
-                </button>
-              ) : null}
-            </div>
-          ))}
+          {seatsQuery.data.map((seat) => {
+            const seatAvailable = seat.available && !soldOut;
+
+            return (
+              <div key={seat.seatId} className={`seat-card ${seatAvailable ? 'seat-available' : 'seat-booked'}`}>
+                <span>{seat.seatNumber}</span>
+                <strong>{seatAvailable ? 'Available' : 'Booked'}</strong>
+                {seatAvailable ? (
+                  <button
+                    className="button button-ghost seat-action"
+                    type="button"
+                    disabled={pendingSeatId === seat.seatId}
+                    onClick={() => void handleSeatBooking(seat.seatId)}
+                  >
+                    {pendingSeatId === seat.seatId ? 'Booking...' : 'Book seat'}
+                  </button>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

@@ -313,6 +313,11 @@ input:focus {
   font-weight: 700;
 }
 
+.availability-pill-alert {
+  background: rgba(166, 27, 27, 0.12);
+  color: #a61b1b;
+}
+
 .text-link {
   color: #0f766e;
   font-weight: 600;
