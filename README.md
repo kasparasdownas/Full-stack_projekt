@@ -15,7 +15,7 @@ This repository implements:
 
 - `frontend` React CSR application
 - `services/auth-service` registration, login, JWT cookie auth, profile endpoint
-- `services/event-service` event list, event detail, seat availability read APIs
+- `services/event-service` event list, event detail, admin event creation, and seat availability APIs
 - `services/booking-service` booking creation, owned booking history, and owned cancellation APIs
 - `infrastructure` nginx, compose, and deployment artifacts
 - `docs` architecture, API, security, and demo documentation
@@ -33,9 +33,14 @@ Delivered user flow:
 7. cancel an owned booking
 8. log out and clear the auth cookie
 
+Delivered admin flow:
+
+1. log in as an `ADMIN`
+2. create an event
+3. generate numbered seats automatically from seat capacity
+
 Still deferred:
 
-- admin UI
 - GraphQL
 - multi-server deployment
 
@@ -56,6 +61,7 @@ Implemented:
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/events`
+- `POST /api/events`
 - `GET /api/events/{eventId}`
 - `GET /api/events/{eventId}/seats`
 - `POST /api/bookings`

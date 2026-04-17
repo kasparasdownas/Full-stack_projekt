@@ -5,7 +5,7 @@
 The system is implemented as a distributed client/server application with three backend services and one browser-based frontend:
 
 - `auth-service` handles identity, registration, login, JWT cookie issuance, and current-user lookup
-- `event-service` handles event catalogue reads and seat availability reads
+- `event-service` handles event catalogue reads, admin event creation, and seat availability reads
 - `booking-service` handles single-seat booking writes and owns the booking table plus the concurrency constraint
 - `frontend` is a React CSR client that consumes REST APIs
 - `nginx` acts as the single entry point for static frontend delivery and reverse proxying
@@ -32,6 +32,8 @@ Logical data ownership:
 Responsibilities:
 
 - list events
+- create events for admins
+- generate numbered seats from seat capacity
 - return event detail
 - expose seat availability by joining seats with bookings read-only
 

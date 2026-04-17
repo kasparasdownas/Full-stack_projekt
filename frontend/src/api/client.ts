@@ -1,6 +1,7 @@
 import type {
   BookingCreateRequest,
   BookingResponse,
+  CreateEventRequest,
   ErrorResponse,
   EventDetail,
   EventSummary,
@@ -89,6 +90,13 @@ export function getEvents() {
 
 export function getEvent(eventId: string) {
   return request<EventDetail>(`/api/events/${eventId}`);
+}
+
+export function createEvent(payload: CreateEventRequest) {
+  return request<EventDetail>('/api/events', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }
 
 export function getEventSeats(eventId: string) {

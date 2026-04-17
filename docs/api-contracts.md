@@ -39,6 +39,18 @@
 }
 ```
 
+### CreateEventRequest
+
+```json
+{
+  "title": "Guest Lecture",
+  "description": "Reliable distributed systems in practice.",
+  "dateTime": "2026-06-01T19:30:00Z",
+  "venue": "Building 101",
+  "seatCapacity": 14
+}
+```
+
 ### SeatAvailability
 
 ```json
@@ -157,6 +169,27 @@ Responses:
 - `200 OK` with an array of `EventSummary`
 - `401 Unauthorized` with `ErrorResponse`
 
+### `POST /api/events`
+
+Request:
+
+```json
+{
+  "title": "Guest Lecture",
+  "description": "Reliable distributed systems in practice.",
+  "dateTime": "2026-06-01T19:30:00Z",
+  "venue": "Building 101",
+  "seatCapacity": 14
+}
+```
+
+Responses:
+
+- `201 Created` with `EventDetail`
+- `400 Bad Request` with `ErrorResponse`
+- `401 Unauthorized` with `ErrorResponse`
+- `403 Forbidden` with `ErrorResponse`
+
 ### `GET /api/events/{eventId}`
 
 Responses:
@@ -209,5 +242,3 @@ Responses:
 - `400 Bad Request` with `VALIDATION_ERROR` when the booking id is malformed
 - `401 Unauthorized` with `ErrorResponse`
 - `404 Not Found` with `BOOKING_NOT_FOUND`
-- `DELETE /api/bookings/{bookingId}`
-- `GET /api/users/me/bookings`

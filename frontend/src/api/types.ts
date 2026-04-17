@@ -25,6 +25,14 @@ export interface EventDetail {
   seatsAvailable: number;
 }
 
+export interface CreateEventRequest {
+  title: string;
+  description: string;
+  dateTime: string;
+  venue: string;
+  seatCapacity: number;
+}
+
 export interface SeatAvailability {
   seatId: string;
   seatNumber: string;

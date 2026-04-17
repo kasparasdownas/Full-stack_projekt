@@ -21,7 +21,13 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
         return ResponseEntity.badRequest()
-                .body(new ErrorResponse("VALIDATION_ERROR", "Request validation failed", List.of()));
+                .body(new ErrorResponse(
+                        "VALIDATION_ERROR",
+                        "Request validation failed",
+                        exception.getBindingResult().getFieldErrors().stream()
+                                .map(fieldError -> new FieldErrorResponse(fieldError.getField(), fieldError.getDefaultMessage()))
+                                .toList()
+                ));
     }
 
     @ExceptionHandler(NotFoundException.class)
@@ -30,4 +36,3 @@ public class ApiExceptionHandler {
                 .body(ErrorResponse.of(exception.code(), exception.getMessage()));
     }
 }
-

@@ -30,6 +30,7 @@ export function AppShell() {
           <Link to="/events">Events</Link>
           {currentUserQuery.data ? (
             <>
+              {currentUserQuery.data.role === 'ADMIN' ? <Link to="/admin/events/new">Create event</Link> : null}
               <Link to="/bookings">My bookings</Link>
               <span className="topbar-user">
                 {currentUserQuery.data.name} ({currentUserQuery.data.role})

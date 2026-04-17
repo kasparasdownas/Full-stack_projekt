@@ -71,6 +71,7 @@ describe('AppShell', () => {
 
     await screen.findByRole('button', { name: 'Log out' });
     expect(screen.getByRole('link', { name: 'My bookings' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Create event' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
 
     await waitFor(() => expect(logoutUserMock).toHaveBeenCalledTimes(1));
@@ -82,5 +83,42 @@ describe('AppShell', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Events' }));
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument());
+  });
+
+  it('shows the admin event link for admins', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      id: 'admin-1',
+      name: 'Admin User',
+      email: 'admin@example.com',
+      role: 'ADMIN',
+    });
+    logoutUserMock.mockResolvedValue(undefined);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          refetchOnWindowFocus: false,
+        },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/events']}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route index element={<h1>Home</h1>} />
+              <Route path="/login" element={<h1>Log in</h1>} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/events" element={<h1>Events</h1>} />
+              </Route>
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole('link', { name: 'Create event' })).toHaveAttribute('href', '/admin/events/new');
   });
 });

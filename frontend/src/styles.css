@@ -25,7 +25,8 @@ a {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -239,7 +240,8 @@ h2 {
   color: #6b7280;
 }
 
-input {
+input,
+textarea {
   width: 100%;
   border-radius: 14px;
   border: 1px solid rgba(27, 34, 49, 0.14);
@@ -247,7 +249,8 @@ input {
   background: rgba(255, 255, 255, 0.9);
 }
 
-input:focus {
+input:focus,
+textarea:focus {
   outline: 2px solid rgba(15, 118, 110, 0.25);
   border-color: #0f766e;
 }

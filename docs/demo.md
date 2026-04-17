@@ -16,6 +16,14 @@
 12. Open the events route again and show that the app redirects back to `Log in`.
 13. Optionally repeat from a second user session and show `Seat already booked`.
 
+## Admin Demo Extension
+
+1. Log in as `admin@example.com`.
+2. Open `Create event`.
+3. Create an event with seat capacity `14`.
+4. Open the created event detail page.
+5. Show that seats `A01` to `A12` and `B01` to `B02` were generated automatically and are available.
+
 ## Seeded Accounts
 
 When demo seeding is enabled, the login page offers quick-fill buttons for:
@@ -32,5 +40,6 @@ When demo seeding is enabled, the login page offers quick-fill buttons for:
 - modular service boundaries
 - JWT cookie authentication
 - logout via cookie clearing
+- admin-only event creation with automatic seat generation
 - database-level concurrency guard actively preventing double booking
 - Docker-based local deployment
