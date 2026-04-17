@@ -53,4 +53,4 @@ docker compose -f infrastructure/docker-compose.yml up --build -d
 - The auth service applies the shared schema migrations during startup.
 - PostgreSQL stays internal to the Compose network and is not published on a host port.
 - The event service seeds events and seats when demo data is enabled.
-- The booking service implements `POST /api/bookings` and keeps cancellation plus history as deferred endpoints.
+- The booking service implements seat booking, owned booking history, and owned booking cancellation.
