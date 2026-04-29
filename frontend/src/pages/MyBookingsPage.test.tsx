@@ -7,17 +7,28 @@ import { MyBookingsPage } from './MyBookingsPage';
 
 const useMyBookingsQueryMock = vi.fn();
 const mutateAsyncMock = vi.fn();
+const useMyWaitlistQueryMock = vi.fn();
+const waitlistMutateAsyncMock = vi.fn();
 
 vi.mock('../features/bookings/useBookings', () => ({
   useMyBookingsQuery: () => useMyBookingsQueryMock(),
+  useMyWaitlistQuery: () => useMyWaitlistQueryMock(),
   useCancelBookingMutation: () => ({
     mutateAsync: mutateAsyncMock,
+  }),
+  useWaitlistMutation: () => ({
+    mutateAsync: waitlistMutateAsyncMock,
   }),
 }));
 
 describe('MyBookingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useMyWaitlistQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: [],
+    });
   });
 
   it('renders booking cards from the query response', () => {

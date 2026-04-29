@@ -1,4 +1,5 @@
 export type UserRole = 'USER' | 'ADMIN';
+export type EventStatus = 'UNPUBLISHED' | 'PUBLISHED' | 'CANCELED';
 
 export interface UserProfile {
   id: string;
@@ -13,6 +14,7 @@ export interface EventSummary {
   dateTime: string;
   venue: string;
   availableSeatCount: number;
+  status: EventStatus;
 }
 
 export interface EventDetail {
@@ -23,6 +25,7 @@ export interface EventDetail {
   venue: string;
   seatsTotal: number;
   seatsAvailable: number;
+  status: EventStatus;
 }
 
 export interface CreateEventRequest {
@@ -31,6 +34,27 @@ export interface CreateEventRequest {
   dateTime: string;
   venue: string;
   seatCapacity: number;
+  status?: EventStatus;
+}
+
+export interface UpdateEventRequest {
+  title: string;
+  description: string;
+  dateTime: string;
+  venue: string;
+  status: EventStatus;
+  seatCapacity: number;
+}
+
+export interface AdminEventSummary {
+  id: string;
+  title: string;
+  dateTime: string;
+  venue: string;
+  status: EventStatus;
+  seatsTotal: number;
+  seatsAvailable: number;
+  bookingCount: number;
 }
 
 export interface SeatAvailability {
@@ -44,12 +68,21 @@ export interface BookingCreateRequest {
   seatId: string;
 }
 
+export interface BookingBatchCreateRequest {
+  eventId: string;
+  seatIds: string[];
+}
+
 export interface BookingResponse {
   id: string;
   eventId: string;
   seatId: string;
   seatNumber: string;
   bookedAt: string;
+}
+
+export interface BookingBatchResponse {
+  bookings: BookingResponse[];
 }
 
 export interface MyBookingSummary {
@@ -60,6 +93,41 @@ export interface MyBookingSummary {
   venue: string;
   seatNumber: string;
   bookedAt: string;
+}
+
+export interface AdminEventBookingSummary {
+  bookingId: string;
+  userId: string;
+  userEmail: string;
+  seatId: string;
+  seatNumber: string;
+  bookedAt: string;
+}
+
+export interface WaitlistEntrySummary {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  eventDateTime: string;
+  venue: string;
+  createdAt: string;
+  notifiedAt: string | null;
+}
+
+export interface AdminWaitlistEntry {
+  id: string;
+  userId: string;
+  userEmail: string;
+  createdAt: string;
+  notifiedAt: string | null;
+}
+
+export interface EmailOutboxSummary {
+  id: string;
+  recipientEmail: string;
+  subject: string;
+  body: string;
+  createdAt: string;
 }
 
 export interface FieldError {

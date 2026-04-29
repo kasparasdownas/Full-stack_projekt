@@ -1,5 +1,6 @@
 package com.distributedbooking.event.api;
 
+import com.distributedbooking.event.domain.EventStatus;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -20,6 +21,7 @@ public record CreateEventRequest(
         String venue,
         @Min(1)
         @Max(120)
-        int seatCapacity
+        int seatCapacity,
+        EventStatus status
 ) {
 }

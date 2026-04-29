@@ -8,21 +8,33 @@ import { EventDetailPage } from './EventDetailPage';
 const useEventQueryMock = vi.fn();
 const useEventSeatsQueryMock = vi.fn();
 const mutateAsyncMock = vi.fn();
+const waitlistMutateAsyncMock = vi.fn();
+const useCurrentUserQueryMock = vi.fn();
 
 vi.mock('../features/events/useEvents', () => ({
   useEventQuery: () => useEventQueryMock(),
   useEventSeatsQuery: () => useEventSeatsQueryMock(),
 }));
 
+vi.mock('../features/auth/useAuth', () => ({
+  useCurrentUserQuery: () => useCurrentUserQueryMock(),
+}));
+
 vi.mock('../features/bookings/useBookings', () => ({
-  useCreateBookingMutation: () => ({
+  useCreateBatchBookingMutation: () => ({
     mutateAsync: mutateAsyncMock,
+    isPending: false,
+  }),
+  useWaitlistMutation: () => ({
+    mutateAsync: waitlistMutateAsyncMock,
+    isPending: false,
   }),
 }));
 
 describe('EventDetailPage', () => {
   beforeEach(() => {
     mutateAsyncMock.mockReset();
+    waitlistMutateAsyncMock.mockReset();
     useEventQueryMock.mockReturnValue({
       isLoading: false,
       isError: false,
@@ -34,6 +46,7 @@ describe('EventDetailPage', () => {
         venue: 'DTU Hall A',
         seatsTotal: 24,
         seatsAvailable: 23,
+        status: 'PUBLISHED',
       },
     });
     useEventSeatsQueryMock.mockReturnValue({
@@ -43,6 +56,9 @@ describe('EventDetailPage', () => {
         { seatId: 'seat-1', seatNumber: 'A01', available: true },
         { seatId: 'seat-2', seatNumber: 'A02', available: false },
       ],
+    });
+    useCurrentUserQueryMock.mockReturnValue({
+      data: { id: 'user-1', name: 'Alice', email: 'alice@example.com', role: 'USER' },
     });
   });
 
@@ -63,9 +79,26 @@ describe('EventDetailPage', () => {
 
     renderPage(queryClient);
 
-    expect(screen.getByRole('button', { name: 'Book seat' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /A01/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Book selected seats' })).toBeDisabled();
     expect(screen.getByText('Booked')).toBeInTheDocument();
     expect(screen.queryByText('Sold out')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'View bookings' })).not.toBeInTheDocument();
+  });
+
+  it('shows an admin booking link for admins', () => {
+    useCurrentUserQueryMock.mockReturnValue({
+      data: { id: 'admin-1', name: 'Admin', email: 'admin@example.com', role: 'ADMIN' },
+    });
+
+    const queryClient = new QueryClient();
+
+    renderPage(queryClient);
+
+    expect(screen.getByRole('link', { name: 'View bookings' })).toHaveAttribute(
+      'href',
+      '/admin/events/event-1/bookings',
+    );
   });
 
   it('shows explicit sold-out state when no seats are available', () => {
@@ -80,6 +113,7 @@ describe('EventDetailPage', () => {
         venue: 'DTU Hall A',
         seatsTotal: 24,
         seatsAvailable: 0,
+        status: 'PUBLISHED',
       },
     });
     useEventSeatsQueryMock.mockReturnValue({
@@ -97,18 +131,21 @@ describe('EventDetailPage', () => {
 
     expect(screen.getByText('Sold out')).toBeInTheDocument();
     expect(screen.getByText('Sold out. No seats are currently available for this event.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Book seat' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Book selected seats' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Join waitlist' })).toBeInTheDocument();
     expect(screen.getAllByText('Booked')).toHaveLength(2);
     expect(screen.getByText('0')).toBeInTheDocument();
   });
 
   it('submits a booking request and refreshes event queries after success', async () => {
     mutateAsyncMock.mockResolvedValue({
-      id: 'booking-1',
-      eventId: 'event-1',
-      seatId: 'seat-1',
-      seatNumber: 'A01',
-      bookedAt: '2026-05-18T18:00:00Z',
+      bookings: [{
+        id: 'booking-1',
+        eventId: 'event-1',
+        seatId: 'seat-1',
+        seatNumber: 'A01',
+        bookedAt: '2026-05-18T18:00:00Z',
+      }],
     });
 
     const queryClient = new QueryClient();
@@ -116,12 +153,13 @@ describe('EventDetailPage', () => {
 
     renderPage(queryClient);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Book seat' }));
+    fireEvent.click(screen.getByRole('button', { name: /A01/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Book selected seats' }));
 
     await waitFor(() =>
       expect(mutateAsyncMock).toHaveBeenCalledWith({
         eventId: 'event-1',
-        seatId: 'seat-1',
+        seatIds: ['seat-1'],
       }),
     );
 
@@ -130,7 +168,7 @@ describe('EventDetailPage', () => {
       expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['events', 'event-1', 'seats'] });
     });
 
-    expect(await screen.findByText('Booked seat A01.')).toBeInTheDocument();
+    expect(await screen.findByText('Booked A01.')).toBeInTheDocument();
   });
 
   it('shows the backend conflict message when the seat is already booked', async () => {
@@ -140,8 +178,9 @@ describe('EventDetailPage', () => {
 
     renderPage(queryClient);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Book seat' }));
+    fireEvent.click(screen.getByRole('button', { name: /A01/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Book selected seats' }));
 
-    expect(await screen.findByText('Seat already booked')).toBeInTheDocument();
+    expect(await screen.findByText('One or more selected seats are already booked.')).toBeInTheDocument();
   });
 });

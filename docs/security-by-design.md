@@ -27,6 +27,7 @@ The current implementation uses a lightweight FIPS-199 style categorization.
 ## Selected Controls
 
 - JWT authentication in HttpOnly cookies
+- double-submit CSRF protection for unsafe cookie-authenticated requests
 - bcrypt password hashing
 - role-based authorization with `USER` and `ADMIN`
 - server-side request validation on write endpoints
@@ -34,6 +35,8 @@ The current implementation uses a lightweight FIPS-199 style categorization.
 - sanitized health endpoints only
 - standardized error payloads with no stack traces
 - one-origin gateway deployment through nginx
+- gateway security headers including CSP, frame protection, nosniff, referrer policy, and permissions policy
+- gateway login rate limiting with a JSON `429 RATE_LIMITED` response
 - CORS allowlist for non-gateway development
 - database-level unique constraint on `(event_id, seat_id)` in `bookings`
 - transactional booking writes that validate event and seat ownership before insert
@@ -42,9 +45,6 @@ The current implementation uses a lightweight FIPS-199 style categorization.
 
 The following are intentionally deferred to later iterations:
 
-- CSRF hardening for authenticated state-changing operations
 - refresh token rotation
-- rate limiting and brute-force protection
 - audit logging for admin actions
-- security headers hardening at the gateway beyond the minimal baseline
 - dependency scanning in CI

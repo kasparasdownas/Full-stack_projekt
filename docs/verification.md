@@ -1,61 +1,88 @@
 # Verification
 
-## Completed locally
+## Automated Checks
 
 ### Backend
-- `auth-service` compiles successfully.
-- `event-service` compiles successfully.
-- `booking-service` compiles successfully.
-- `auth-service` tests pass. Docker-backed integration tests are skipped automatically when Docker is unavailable.
-- `event-service` tests pass. Docker-backed integration tests are skipped automatically when Docker is unavailable.
-- `booking-service` tests pass. Docker-backed integration tests are skipped automatically when Docker is unavailable.
 
-### Frontend
-- `npm test` passes.
-- `npm run build` passes.
-
-## Commands used
-
-### Java services
 ```bash
-HOME=$PWD /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=$PWD/.m2 -pl services/auth-service test
-HOME=$PWD /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=$PWD/.m2 -pl services/event-service test
-HOME=$PWD /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=$PWD/.m2 -pl services/booking-service test
+mvn -B test
 ```
 
+Expected result:
+
+- auth-service tests pass
+- event-service tests pass
+- booking-service tests pass
+- Docker-backed Testcontainers tests run when Docker is available and skip automatically when unavailable
+
 ### Frontend
+
 ```bash
 cd frontend
-npm install
-npm test
+npm ci
+npm test -- --run
 npm run build
 ```
 
-## Not executed in this environment
+Expected result:
 
-- `docker compose up` smoke run was not executed because Docker is not installed in this environment.
-- End-to-end browser validation through the reverse proxy is still pending for the first machine that has Docker available.
-- API latency and frontend first-load baseline numbers are still pending for the first live Compose run.
+- component and hook tests pass
+- production frontend build succeeds
 
-## Compose smoke checklist
+### Script Syntax
 
-Run this once Docker is available:
+```bash
+node --check scripts/smoke-test.mjs
+node --check scripts/concurrency-demo.mjs
+node --check scripts/measure-baseline.mjs
+```
 
-1. Start the stack with `docker compose -f infrastructure/docker-compose.yml up --build`.
-2. Open the frontend through the gateway on port `8080`.
-3. Register a new user.
-4. Log in and confirm `/api/auth/me` returns the logged-in user.
-5. Open the events page and confirm demo events render.
-6. Open one event and confirm seat availability renders.
-7. Open Swagger for auth and event services and confirm documented contracts match responses.
+## Live Stack Verification
 
-## Baseline measurements to record
+Start the stack:
 
-Record these on the first successful Docker smoke deployment:
+```bash
+docker compose -f infrastructure/docker-compose.yml up --build -d
+```
 
-| Metric | Method | Result |
-| --- | --- | --- |
-| Frontend first load time | Browser devtools, hard refresh on landing page | Pending |
-| Event list API latency | `GET /api/events` through gateway | Pending |
-| Event detail API latency | `GET /api/events/{id}` through gateway | Pending |
-| Seat availability API latency | `GET /api/events/{id}/seats` through gateway | Pending |
+Run:
+
+```bash
+node scripts/smoke-test.mjs
+node scripts/concurrency-demo.mjs
+node scripts/measure-baseline.mjs
+```
+
+The smoke test proves the main admin/user booking loop. The concurrency demo proves the database unique constraint and transaction flow prevent double booking. The baseline script records the performance numbers requested by the CSR/SSR and operations course topics.
+
+## CI
+
+GitHub Actions runs on pushes and pull requests to `main`:
+
+- backend job: Java 21 and `mvn -B test`
+- frontend job: Node 22, `npm ci`, `npm test -- --run`, and `npm run build`
+
+## Course Evidence Checklist
+
+| Course topic | Evidence |
+| --- | --- |
+| Full-stack client/server | React frontend, nginx gateway, three Spring Boot services |
+| JSON communication | JSON request/response contracts in `docs/api-contracts.md` |
+| REST/Richardson level 2 | Resource URIs, HTTP verbs, status codes, OpenAPI docs |
+| Security by design | FIPS-199 categorization, abuse cases, CSRF, bcrypt, roles, headers |
+| Docker/container operation | Compose stack and Debian 12 runbook |
+| Transactions/concurrency | `UNIQUE (event_id, seat_id)`, booking transaction, concurrency script |
+| Testing | backend tests, frontend tests, smoke script, CI workflow |
+| CSR/SSR decision | CSR rationale and baseline measurement script |
+| GraphQL topic | documented decision to standardize on REST instead |
+
+## Evidence to Capture on Debian VM
+
+Paste final outputs into `docs/deployment-evidence.md`:
+
+1. `docker --version`
+2. `docker compose version`
+3. `docker compose -f infrastructure/docker-compose.yml ps`
+4. `node scripts/smoke-test.mjs`
+5. `node scripts/concurrency-demo.mjs`
+6. `node scripts/measure-baseline.mjs`

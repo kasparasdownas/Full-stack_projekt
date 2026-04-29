@@ -2,55 +2,103 @@
 
 ## Current Target
 
-The current iteration targets:
+The required deployment proof is one Debian 12 VM running the containerized stack with Docker Compose.
 
-- local development with separate service processes
-- one-host deployment on Debian 12 using containers
-
-Multi-server deployment is postponed to a later iteration.
+Multi-server deployment remains deferred. The current target still demonstrates the course requirements for containerized deployment, operations, and a distributed client/server service topology.
 
 ## Services
 
-- `gateway` nginx static frontend and reverse proxy
-- `auth-service`
-- `event-service`
-- `booking-service`
-- `postgres`
+- `gateway`: nginx static frontend and reverse proxy on port `8080`
+- `auth-service`: registration, login, logout, CSRF bootstrap, and profile API
+- `event-service`: event reads and admin event creation
+- `booking-service`: booking writes, cancellation, user booking history, admin event booking visibility
+- `postgres`: internal PostgreSQL database, not published to the host
 
-## Environment Variables
+## Debian 12 Runbook
 
-Each service expects environment variables for:
+1. Install Docker Engine and the Docker Compose plugin.
 
-- database URL
-- database username
-- database password
-- JWT secret
-- cookie security flags
-- optional origin allowlist
-- demo-data seeding switch
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
 
-See service-specific `application.yml` files and the compose file for defaults.
+2. Clone or copy the repository to the VM.
 
-## Debian 12 Smoke Deployment
+```bash
+git clone <repo-url>
+cd Full-stack_projekt
+```
 
-1. Install Docker Engine and Docker Compose plugin.
-2. Copy the repository to the server.
-3. Set production environment variables.
-4. Run:
+3. Set deployment secrets before starting the stack.
+
+```bash
+export APP_JWT_SECRET="<at-least-32-characters-production-secret>"
+export APP_AUTH_COOKIE_SECURE=false
+export APP_ALLOWED_ORIGINS="http://<vm-host-or-ip>:8080"
+```
+
+4. Start the stack.
 
 ```bash
 docker compose -f infrastructure/docker-compose.yml up --build -d
 ```
 
-5. Verify:
+5. Inspect runtime state.
 
-- `GET /actuator/health` on the backend services
-- `GET /api/events` through the gateway after authenticating
-- frontend landing page through the gateway
+```bash
+docker compose -f infrastructure/docker-compose.yml ps
+docker compose -f infrastructure/docker-compose.yml logs --tail=100 gateway
+docker compose -f infrastructure/docker-compose.yml logs --tail=100 auth-service
+docker compose -f infrastructure/docker-compose.yml logs --tail=100 event-service
+docker compose -f infrastructure/docker-compose.yml logs --tail=100 booking-service
+```
 
-## Runtime Notes
+6. Restart or stop the stack when needed.
 
-- The auth service applies the shared schema migrations during startup.
-- PostgreSQL stays internal to the Compose network and is not published on a host port.
-- The event service seeds events and seats when demo data is enabled.
-- The booking service implements seat booking, owned booking history, and owned booking cancellation.
+```bash
+docker compose -f infrastructure/docker-compose.yml restart
+docker compose -f infrastructure/docker-compose.yml down
+```
+
+## Health and Smoke Verification
+
+Run these from a machine that can reach the gateway.
+
+```bash
+curl -i http://localhost:8080/
+node scripts/smoke-test.mjs
+node scripts/concurrency-demo.mjs
+node scripts/measure-baseline.mjs
+```
+
+If the VM is remote, set:
+
+```bash
+export BOOKING_BASE_URL="http://<vm-host-or-ip>:8080"
+```
+
+Expected results:
+
+- frontend returns HTML through the gateway
+- smoke test exits `0`
+- concurrency demo exits `0` with exactly one `201` and one `409 SEAT_ALREADY_BOOKED`
+- baseline script prints the latency table for frontend, event list, event detail, and seat availability
+
+## Evidence
+
+Copy the final VM proof into `docs/deployment-evidence.md`:
+
+- deployment date/time
+- VM OS/version
+- `docker --version`
+- `docker compose version`
+- `docker compose ps`
+- health/smoke outputs
+- concurrency demo output
+- baseline measurement table

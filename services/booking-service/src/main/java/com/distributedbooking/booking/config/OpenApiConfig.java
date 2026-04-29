@@ -13,6 +13,6 @@ public class OpenApiConfig {
         return new OpenAPI().info(new Info()
                 .title("Booking Service API")
                 .version("1.0")
-                .description("Booking API for the distributed booking platform, including seat reservation, user booking history, and owned booking cancellation."));
+                .description("Booking API for the distributed booking platform, including single-seat and batch reservation, user booking history, owned cancellation, waitlist entries, admin booking visibility, and mock email outbox evidence."));
     }
 }

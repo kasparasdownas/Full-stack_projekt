@@ -1,5 +1,6 @@
 package com.distributedbooking.event.api;
 
+import com.distributedbooking.event.domain.EventStatus;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -10,7 +11,7 @@ public record EventDetailResponse(
         OffsetDateTime dateTime,
         String venue,
         int seatsTotal,
-        int seatsAvailable
+        int seatsAvailable,
+        EventStatus status
 ) {
 }
-

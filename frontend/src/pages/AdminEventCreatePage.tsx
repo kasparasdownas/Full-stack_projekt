@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/client';
+import type { EventStatus } from '../api/types';
 import { FormField } from '../components/FormField';
 import { useCreateEventMutation } from '../features/events/useEvents';
 
@@ -13,6 +14,7 @@ export function AdminEventCreatePage() {
   const [dateTime, setDateTime] = useState('');
   const [venue, setVenue] = useState('');
   const [seatCapacity, setSeatCapacity] = useState('24');
+  const [status, setStatus] = useState<EventStatus>('PUBLISHED');
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,6 +25,7 @@ export function AdminEventCreatePage() {
       dateTime: new Date(dateTime).toISOString(),
       venue,
       seatCapacity: Number(seatCapacity),
+      status,
     });
 
     navigate(`/events/${createdEvent.id}`);
@@ -78,6 +81,14 @@ export function AdminEventCreatePage() {
             onChange={(event) => setSeatCapacity(event.target.value)}
             required
           />
+        </FormField>
+
+        <FormField label="Initial status" htmlFor="create-event-status">
+          <select id="create-event-status" value={status} onChange={(event) => setStatus(event.target.value as EventStatus)}>
+            <option value="PUBLISHED">Published</option>
+            <option value="UNPUBLISHED">Unpublished</option>
+            <option value="CANCELED">Canceled</option>
+          </select>
         </FormField>
 
         {createEventMutation.error instanceof ApiError ? (

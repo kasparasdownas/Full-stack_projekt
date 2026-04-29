@@ -40,8 +40,8 @@ public class DemoEventSeeder implements ApplicationRunner {
 
         for (Map<String, Object> event : events) {
             jdbcTemplate.update("""
-                            INSERT INTO events (id, title, description, date_time, venue, created_at, updated_at)
-                            VALUES (:id, :title, :description, :dateTime, :venue, :createdAt, :updatedAt)
+                            INSERT INTO events (id, title, description, date_time, venue, status, created_at, updated_at)
+                            VALUES (:id, :title, :description, :dateTime, :venue, :status, :createdAt, :updatedAt)
                             """,
                     new MapSqlParameterSource(event)
             );
@@ -77,9 +77,9 @@ public class DemoEventSeeder implements ApplicationRunner {
                 "description", description,
                 "dateTime", dateTime,
                 "venue", venue,
+                "status", EventStatus.PUBLISHED.name(),
                 "createdAt", now,
                 "updatedAt", now
         );
     }
 }
-

@@ -2,6 +2,7 @@ package com.distributedbooking.booking;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.distributedbooking.booking.api.AdminEventBookingSummaryResponse;
 import com.distributedbooking.booking.api.BookingController;
 import com.distributedbooking.booking.api.MyBookingSummaryResponse;
 import com.distributedbooking.booking.domain.BookingQueryService;
@@ -43,8 +44,13 @@ class BookingServiceStartupTest {
                     context.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
 
             assertThat(findHandlers(handlerMapping, RequestMethod.POST, "/api/bookings")).hasSize(1);
+            assertThat(findHandlers(handlerMapping, RequestMethod.POST, "/api/bookings/batch")).hasSize(1);
             assertThat(findHandlers(handlerMapping, RequestMethod.GET, "/api/users/me/bookings")).hasSize(1);
+            assertThat(findHandlers(handlerMapping, RequestMethod.GET, "/api/users/me/waitlist")).hasSize(1);
             assertThat(findHandlers(handlerMapping, RequestMethod.DELETE, "/api/bookings/{bookingId}")).hasSize(1);
+            assertThat(findHandlers(handlerMapping, RequestMethod.GET, "/api/admin/events/{eventId}/bookings")).hasSize(1);
+            assertThat(findHandlers(handlerMapping, RequestMethod.GET, "/api/admin/events/{eventId}/waitlist")).hasSize(1);
+            assertThat(findHandlers(handlerMapping, RequestMethod.GET, "/api/admin/email-outbox")).hasSize(1);
         });
     }
 
@@ -82,6 +88,11 @@ class BookingServiceStartupTest {
             return new BookingQueryService(null) {
                 @Override
                 public List<MyBookingSummaryResponse> listUserBookings(UUID userId) {
+                    return List.of();
+                }
+
+                @Override
+                public List<AdminEventBookingSummaryResponse> listEventBookingsForAdmin(UUID eventId) {
                     return List.of();
                 }
             };

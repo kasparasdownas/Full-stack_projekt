@@ -26,8 +26,13 @@ a {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
+}
+
+table {
+  border-collapse: collapse;
 }
 
 #root {
@@ -190,6 +195,12 @@ h2 {
   color: #0f766e;
 }
 
+.button-danger {
+  background: rgba(166, 27, 27, 0.1);
+  color: #a61b1b;
+  border-color: rgba(166, 27, 27, 0.22);
+}
+
 .stat-card {
   display: grid;
   gap: 0.2rem;
@@ -241,7 +252,8 @@ h2 {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   border-radius: 14px;
   border: 1px solid rgba(27, 34, 49, 0.14);
@@ -250,7 +262,8 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   outline: 2px solid rgba(15, 118, 110, 0.25);
   border-color: #0f766e;
 }
@@ -319,6 +332,49 @@ textarea:focus {
   flex-wrap: wrap;
 }
 
+.action-row {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.admin-event-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-event-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.compact-stats {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 520px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.85rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(27, 34, 49, 0.1);
+}
+
+.data-table th {
+  color: #556074;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .event-card-header {
   display: flex;
   justify-content: space-between;
@@ -336,6 +392,31 @@ textarea:focus {
 }
 
 .availability-pill-alert {
+  background: rgba(166, 27, 27, 0.12);
+  color: #a61b1b;
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.status-published {
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f766e;
+}
+
+.status-unpublished {
+  background: rgba(245, 158, 11, 0.16);
+  color: #92400e;
+}
+
+.status-canceled {
   background: rgba(166, 27, 27, 0.12);
   color: #a61b1b;
 }
@@ -371,6 +452,68 @@ textarea:focus {
 .seat-action {
   width: 100%;
   margin-top: 0.2rem;
+}
+
+.cinema-screen {
+  margin: 1rem auto 1.25rem;
+  width: min(100%, 520px);
+  padding: 0.7rem 1rem;
+  text-align: center;
+  border-radius: 999px;
+  color: #556074;
+  background: linear-gradient(90deg, rgba(27, 34, 49, 0.08), rgba(15, 118, 110, 0.16), rgba(27, 34, 49, 0.08));
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.cinema-map {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.seat-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.row-label {
+  font-weight: 800;
+  color: #556074;
+}
+
+.seat-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 0.55rem;
+}
+
+.cinema-seat {
+  display: grid;
+  gap: 0.15rem;
+  min-height: 4.3rem;
+  border-radius: 16px 16px 9px 9px;
+  border: 1px solid rgba(27, 34, 49, 0.12);
+  color: #1b2231;
+}
+
+.seat-selected {
+  outline: 3px solid rgba(15, 118, 110, 0.34);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.16);
+}
+
+.booking-summary {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(27, 34, 49, 0.1);
 }
 
 .seat-available {

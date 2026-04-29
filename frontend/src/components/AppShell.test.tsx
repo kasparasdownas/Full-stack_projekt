@@ -119,6 +119,6 @@ describe('AppShell', () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole('link', { name: 'Create event' })).toHaveAttribute('href', '/admin/events/new');
+    expect(await screen.findByRole('link', { name: 'Admin events' })).toHaveAttribute('href', '/admin/events');
   });
 });

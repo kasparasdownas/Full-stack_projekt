@@ -2,7 +2,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
-import { useCreateBookingMutation } from '../features/bookings/useBookings';
+import { useCurrentUserQuery } from '../features/auth/useAuth';
+import { useCreateBatchBookingMutation, useWaitlistMutation } from '../features/bookings/useBookings';
 import { useEventQuery, useEventSeatsQuery } from '../features/events/useEvents';
 
 export function EventDetailPage() {
@@ -10,8 +11,10 @@ export function EventDetailPage() {
   const queryClient = useQueryClient();
   const eventQuery = useEventQuery(eventId);
   const seatsQuery = useEventSeatsQuery(eventId);
-  const bookingMutation = useCreateBookingMutation();
-  const [pendingSeatId, setPendingSeatId] = useState<string | null>(null);
+  const currentUserQuery = useCurrentUserQuery();
+  const bookingMutation = useCreateBatchBookingMutation();
+  const waitlistMutation = useWaitlistMutation();
+  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
   if (!eventId) {
@@ -27,26 +30,62 @@ export function EventDetailPage() {
   }
 
   const soldOut = eventQuery.data.seatsAvailable === 0;
+  const eventIsPast = new Date(eventQuery.data.dateTime).getTime() <= Date.now();
+  const bookingOpen = eventQuery.data.status === 'PUBLISHED' && !eventIsPast;
+  const bookingDisabledReason = eventQuery.data.status === 'CANCELED'
+    ? 'This event is canceled.'
+    : eventQuery.data.status === 'UNPUBLISHED'
+      ? 'This event is currently unpublished.'
+      : eventIsPast
+        ? 'This event has already happened.'
+        : null;
+  const seatRows = seatsQuery.data.reduce<Record<string, typeof seatsQuery.data>>((rows, seat) => {
+    const row = seat.seatNumber.match(/^[A-Z]+/)?.[0] ?? 'Other';
+    rows[row] = rows[row] ?? [];
+    rows[row].push(seat);
+    return rows;
+  }, {});
 
-  async function handleSeatBooking(seatId: string) {
-    setPendingSeatId(seatId);
+  function toggleSeat(seatId: string) {
+    setFeedback(null);
+    setSelectedSeatIds((current) => (
+      current.includes(seatId)
+        ? current.filter((selectedSeatId) => selectedSeatId !== seatId)
+        : [...current, seatId]
+    ));
+  }
+
+  async function handleSeatBooking() {
+    if (selectedSeatIds.length === 0) return;
     setFeedback(null);
 
     try {
-      const booking = await bookingMutation.mutateAsync({ eventId, seatId });
+      const response = await bookingMutation.mutateAsync({ eventId, seatIds: selectedSeatIds });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['events', eventId] }),
         queryClient.invalidateQueries({ queryKey: ['events', eventId, 'seats'] }),
       ]);
-      setFeedback({ kind: 'success', message: `Booked seat ${booking.seatNumber}.` });
+      setFeedback({ kind: 'success', message: `Booked ${response.bookings.map((booking) => booking.seatNumber).join(', ')}.` });
+      setSelectedSeatIds([]);
     } catch (error) {
       if (error instanceof ApiError && error.code === 'SEAT_ALREADY_BOOKED') {
-        setFeedback({ kind: 'error', message: 'Seat already booked' });
+        setFeedback({ kind: 'error', message: 'One or more selected seats are already booked.' });
       } else {
-        setFeedback({ kind: 'error', message: 'Unable to book this seat right now.' });
+        setFeedback({ kind: 'error', message: 'Unable to book these seats right now.' });
       }
-    } finally {
-      setPendingSeatId(null);
+    }
+  }
+
+  async function handleJoinWaitlist() {
+    setFeedback(null);
+    try {
+      await waitlistMutation.mutateAsync({ eventId, action: 'join' });
+      setFeedback({ kind: 'success', message: 'You joined the waitlist. A mock notification email was recorded.' });
+    } catch (error) {
+      setFeedback({
+        kind: 'error',
+        message: error instanceof ApiError ? error.message : 'Unable to join the waitlist right now.',
+      });
     }
   }
 
@@ -60,11 +99,17 @@ export function EventDetailPage() {
         <div>
           <p className="eyebrow">Event detail</p>
           <h1>{eventQuery.data.title}</h1>
+          <span className={`status-pill status-${eventQuery.data.status.toLowerCase()}`}>{eventQuery.data.status}</span>
           {soldOut ? <span className="availability-pill availability-pill-alert">Sold out</span> : null}
           <p className="detail-meta">
             {new Date(eventQuery.data.dateTime).toLocaleString()} · {eventQuery.data.venue}
           </p>
           <p className="hero-text">{eventQuery.data.description}</p>
+          {currentUserQuery.data?.role === 'ADMIN' ? (
+            <Link to={`/admin/events/${eventId}/bookings`} className="button button-secondary">
+              View bookings
+            </Link>
+          ) : null}
         </div>
 
         <div className="detail-stats">
@@ -90,33 +135,75 @@ export function EventDetailPage() {
           </p>
         ) : null}
 
+        {bookingDisabledReason ? (
+          <p className="inline-error" role="status">
+            {bookingDisabledReason}
+          </p>
+        ) : null}
+
         {feedback ? (
           <p className={feedback.kind === 'success' ? 'inline-success' : 'inline-error'} role={feedback.kind === 'success' ? 'status' : 'alert'}>
             {feedback.message}
           </p>
         ) : null}
 
-        <div className="seat-grid">
-          {seatsQuery.data.map((seat) => {
-            const seatAvailable = seat.available && !soldOut;
+        <div className="cinema-screen">Screen / stage</div>
 
-            return (
-              <div key={seat.seatId} className={`seat-card ${seatAvailable ? 'seat-available' : 'seat-booked'}`}>
-                <span>{seat.seatNumber}</span>
-                <strong>{seatAvailable ? 'Available' : 'Booked'}</strong>
-                {seatAvailable ? (
-                  <button
-                    className="button button-ghost seat-action"
-                    type="button"
-                    disabled={pendingSeatId === seat.seatId}
-                    onClick={() => void handleSeatBooking(seat.seatId)}
-                  >
-                    {pendingSeatId === seat.seatId ? 'Booking...' : 'Book seat'}
-                  </button>
-                ) : null}
+        <div className="cinema-map">
+          {Object.entries(seatRows).map(([row, seats]) => (
+            <div key={row} className="seat-row">
+              <span className="row-label">{row}</span>
+              <div className="seat-row-grid">
+                {seats.map((seat) => {
+                  const selectable = seat.available && bookingOpen;
+                  const selected = selectedSeatIds.includes(seat.seatId);
+
+                  return (
+                    <button
+                      key={seat.seatId}
+                      className={`cinema-seat ${seat.available ? 'seat-available' : 'seat-booked'} ${selected ? 'seat-selected' : ''}`}
+                      type="button"
+                      disabled={!selectable || bookingMutation.isPending}
+                      aria-pressed={selected}
+                      onClick={() => toggleSeat(seat.seatId)}
+                    >
+                      <span>{seat.seatNumber}</span>
+                      <strong>{seat.available ? (selected ? 'Selected' : 'Free') : 'Booked'}</strong>
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
+        </div>
+
+        <div className="booking-summary">
+          <p>
+            Selected seats:{' '}
+            <strong>
+              {selectedSeatIds.length === 0
+                ? 'None'
+                : seatsQuery.data.filter((seat) => selectedSeatIds.includes(seat.seatId)).map((seat) => seat.seatNumber).join(', ')}
+            </strong>
+          </p>
+          <button
+            className="button button-primary"
+            type="button"
+            disabled={!bookingOpen || selectedSeatIds.length === 0 || bookingMutation.isPending}
+            onClick={() => void handleSeatBooking()}
+          >
+            {bookingMutation.isPending ? 'Booking seats...' : 'Book selected seats'}
+          </button>
+          {soldOut && bookingOpen ? (
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={waitlistMutation.isPending}
+              onClick={() => void handleJoinWaitlist()}
+            >
+              {waitlistMutation.isPending ? 'Joining waitlist...' : 'Join waitlist'}
+            </button>
+          ) : null}
         </div>
       </div>
     </section>

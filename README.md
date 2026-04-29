@@ -9,14 +9,14 @@ This repository implements:
 - Shared PostgreSQL database
 - JSON REST APIs with OpenAPI docs
 - Nginx reverse proxy for one-origin deployment
-- Security-by-design documentation, deployment notes, and smoke demo material
+- Security-by-design controls, CI, deployment notes, and smoke demo material
 
 ## Repository Layout
 
 - `frontend` React CSR application
 - `services/auth-service` registration, login, JWT cookie auth, profile endpoint
-- `services/event-service` event list, event detail, admin event creation, and seat availability APIs
-- `services/booking-service` booking creation, owned booking history, and owned cancellation APIs
+- `services/event-service` event catalogue, seat lifecycle, admin event dashboard, event editing, status changes, and safe deletion
+- `services/booking-service` single-seat and multi-seat booking, owned booking history, future-only cancellation, waitlist, admin booking visibility, and mock email outbox
 - `infrastructure` nginx, compose, and deployment artifacts
 - `docs` architecture, API, security, and demo documentation
 
@@ -28,21 +28,25 @@ Delivered user flow:
 2. browse seeded demo events
 3. open an event
 4. view seat availability
-5. book one available seat
+5. select and book one or more available seats from the cinema-style seat map
 6. review active bookings
-7. cancel an owned booking
-8. log out and clear the auth cookie
+7. cancel an owned future booking
+8. join or leave a waitlist for sold-out events
+9. log out and clear the auth cookie
 
 Delivered admin flow:
 
 1. log in as an `ADMIN`
-2. create an event
-3. generate numbered seats automatically from seat capacity
+2. create, edit, publish, unpublish, cancel, and safely delete events
+3. generate and resize numbered seats from event capacity
+4. view bookings and waitlist entries for a specific event
+5. inspect the mock email outbox as demo evidence
 
 Still deferred:
 
-- GraphQL
 - multi-server deployment
+
+GraphQL remains out of scope because the project standardizes on REST APIs.
 
 ## Service Ports
 
@@ -57,16 +61,30 @@ Still deferred:
 Implemented:
 
 - `POST /api/auth/register`
+- `GET /api/auth/csrf`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/events`
 - `POST /api/events`
+- `GET /api/admin/events`
+- `PUT /api/events/{eventId}`
+- `POST /api/events/{eventId}/publish`
+- `POST /api/events/{eventId}/unpublish`
+- `POST /api/events/{eventId}/cancel`
+- `DELETE /api/events/{eventId}`
 - `GET /api/events/{eventId}`
 - `GET /api/events/{eventId}/seats`
 - `POST /api/bookings`
+- `POST /api/bookings/batch`
 - `GET /api/users/me/bookings`
 - `DELETE /api/bookings/{bookingId}`
+- `POST /api/events/{eventId}/waitlist`
+- `DELETE /api/events/{eventId}/waitlist`
+- `GET /api/users/me/waitlist`
+- `GET /api/admin/events/{eventId}/bookings`
+- `GET /api/admin/events/{eventId}/waitlist`
+- `GET /api/admin/email-outbox`
 
 ## Prerequisites
 
@@ -84,7 +102,7 @@ npm install
 npm run dev
 ```
 
-The Vite dev server proxies `/api/auth`, `/api/events`, `/api/bookings`, and `/api/users/me/bookings` to the local backend services.
+The Vite dev server proxies `/api/auth`, `/api/events`, `/api/bookings`, `/api/users/me/bookings`, `/api/users/me/waitlist`, and admin booking/event routes to the local backend services.
 
 ## Backend Development
 
@@ -108,6 +126,28 @@ docker compose -f infrastructure/docker-compose.yml up --build
 
 The gateway serves the frontend and proxies API traffic to the backend services.
 
+## Verification Scripts
+
+With the Docker Compose stack running on port `8080`, run:
+
+```bash
+node scripts/smoke-test.mjs
+node scripts/concurrency-demo.mjs
+node scripts/measure-baseline.mjs
+```
+
+These scripts prove the main user/admin lifecycle flow, multi-seat booking, waitlist notification evidence, the database concurrency guard, and the baseline response times needed for the course verification notes.
+
+## Concurrency Demo
+
+With the Docker Compose stack running on port `8080`, run:
+
+```bash
+node scripts/concurrency-demo.mjs
+```
+
+The script creates a one-seat demo event, races Alice and Bob against the same seat, and exits successfully only when one request succeeds and the other receives `SEAT_ALREADY_BOOKED`.
+
 ## Documentation
 
 - [Architecture](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/architecture.md)
@@ -115,4 +155,5 @@ The gateway serves the frontend and proxies API traffic to the backend services.
 - [Security By Design](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/security-by-design.md)
 - [Deployment](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/deployment.md)
 - [Demo Script](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/demo.md)
-- [Postman Collection](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/postman/iteration-1.postman_collection.json)
+- [Deployment Evidence](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/deployment-evidence.md)
+- [Postman Collection](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/postman/distributed-booking-current.postman_collection.json)

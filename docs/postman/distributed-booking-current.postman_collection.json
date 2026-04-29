@@ -1,0 +1,352 @@
+{
+  "info": {
+    "name": "Distributed Event Booking System - Current Smoke Flow",
+    "_postman_id": "2b8af2f7-44db-4b22-a189-72f18d28f7d4",
+    "description": "Current REST smoke flow covering CSRF, auth, admin event lifecycle, batch booking, cancellation, waitlist, email outbox evidence, and admin event booking visibility.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "xsrfToken", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "seatId", "value": "" },
+    { "key": "seatIdsJson", "value": "[]" },
+    { "key": "bookingId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "CSRF Bootstrap",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const token = pm.cookies.get('XSRF-TOKEN');",
+              "pm.test('CSRF token cookie exists', () => pm.expect(token).to.be.ok);",
+              "pm.collectionVariables.set('xsrfToken', decodeURIComponent(token));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/auth/csrf"
+      }
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"postman.user@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/register"
+      }
+    },
+    {
+      "name": "Login Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Me",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/auth/me"
+      }
+    },
+    {
+      "name": "Create Admin Event",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('eventId', body.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Postman Demo Event\",\n  \"description\": \"Created from the current Postman collection.\",\n  \"dateTime\": \"2026-06-15T18:00:00Z\",\n  \"venue\": \"Postman Hall\",\n  \"seatCapacity\": 4\n}"
+        },
+        "url": "{{baseUrl}}/api/events"
+      }
+    },
+    {
+      "name": "Admin Events Dashboard",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/events"
+      }
+    },
+    {
+      "name": "Update Admin Event Capacity",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Postman Demo Event Updated\",\n  \"description\": \"Updated from the current Postman collection.\",\n  \"dateTime\": \"2026-06-15T18:00:00Z\",\n  \"venue\": \"Postman Hall\",\n  \"status\": \"PUBLISHED\",\n  \"seatCapacity\": 5\n}"
+        },
+        "url": "{{baseUrl}}/api/events/{{eventId}}"
+      }
+    },
+    {
+      "name": "Unpublish Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/events/{{eventId}}/unpublish"
+      }
+    },
+    {
+      "name": "Publish Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/events/{{eventId}}/publish"
+      }
+    },
+    {
+      "name": "List Events",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/events"
+      }
+    },
+    {
+      "name": "Get Event Detail",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/events/{{eventId}}"
+      }
+    },
+    {
+      "name": "Get Event Seats",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "const available = body.find((seat) => seat.available);",
+              "pm.test('available seat exists', () => pm.expect(available).to.be.ok);",
+              "pm.collectionVariables.set('seatId', available.seatId);",
+              "pm.collectionVariables.set('seatIdsJson', JSON.stringify(body.filter((seat) => seat.available).map((seat) => seat.seatId)));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/events/{{eventId}}/seats"
+      }
+    },
+    {
+      "name": "Login Alice",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Create Batch Booking",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('bookingId', body.bookings[0].id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"seatIds\": {{seatIdsJson}}\n}"
+        },
+        "url": "{{baseUrl}}/api/bookings/batch"
+      }
+    },
+    {
+      "name": "My Bookings",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/users/me/bookings"
+      }
+    },
+    {
+      "name": "Login Bob",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"bob@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Join Waitlist",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/events/{{eventId}}/waitlist"
+      }
+    },
+    {
+      "name": "My Waitlist",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/users/me/waitlist"
+      }
+    },
+    {
+      "name": "Login Alice Again",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Password123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Cancel Booking",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/bookings/{{bookingId}}"
+      }
+    },
+    {
+      "name": "Login Admin Again",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123!\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Admin Event Bookings",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/events/{{eventId}}/bookings"
+      }
+    },
+    {
+      "name": "Admin Event Waitlist",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/events/{{eventId}}/waitlist"
+      }
+    },
+    {
+      "name": "Admin Email Outbox",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/admin/email-outbox"
+      }
+    },
+    {
+      "name": "Delete Event Blocked By Dependencies",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/events/{{eventId}}"
+      }
+    },
+    {
+      "name": "Cancel Event",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/events/{{eventId}}/cancel"
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "X-XSRF-TOKEN", "value": "{{xsrfToken}}" }
+        ],
+        "url": "{{baseUrl}}/api/auth/logout"
+      }
+    }
+  ]
+}

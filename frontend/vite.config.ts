@@ -10,6 +10,10 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
       },
+      '^/api/events/[^/]+/waitlist$': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
       '/api/events': {
         target: 'http://localhost:8082',
         changeOrigin: true,
@@ -18,7 +22,23 @@ export default defineConfig({
         target: 'http://localhost:8083',
         changeOrigin: true,
       },
+      '/api/admin/events/': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/admin/events': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+      },
+      '/api/admin/email-outbox': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
       '/api/users/me/bookings': {
+        target: 'http://localhost:8083',
+        changeOrigin: true,
+      },
+      '/api/users/me/waitlist': {
         target: 'http://localhost:8083',
         changeOrigin: true,
       },

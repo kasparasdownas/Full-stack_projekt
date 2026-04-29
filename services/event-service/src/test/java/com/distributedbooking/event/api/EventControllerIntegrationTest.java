@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -94,6 +95,7 @@ class EventControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/events")
+                        .with(csrf())
                         .cookie(adminAuthCookie)
                         .contentType(APPLICATION_JSON)
                         .content(payload))
@@ -140,6 +142,7 @@ class EventControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/events")
+                        .with(csrf())
                         .cookie(userAuthCookie)
                         .contentType(APPLICATION_JSON)
                         .content(payload))
@@ -160,6 +163,7 @@ class EventControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/events")
+                        .with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isUnauthorized());
@@ -178,6 +182,7 @@ class EventControllerIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/events")
+                        .with(csrf())
                         .cookie(adminAuthCookie)
                         .contentType(APPLICATION_JSON)
                         .content(payload))
@@ -189,6 +194,25 @@ class EventControllerIntegrationTest {
     void requiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/events"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void createEventRejectsMissingCsrfToken() throws Exception {
+        String payload = """
+                {
+                  "title": "Missing CSRF",
+                  "description": "Should be rejected before write.",
+                  "dateTime": "2026-06-01T19:30:00Z",
+                  "venue": "Building 101",
+                  "seatCapacity": 12
+                }
+                """;
+
+        mockMvc.perform(post("/api/events")
+                        .cookie(adminAuthCookie)
+                        .contentType(APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isForbidden());
     }
 
     private Cookie authCookie(String userId, String email, String role) {

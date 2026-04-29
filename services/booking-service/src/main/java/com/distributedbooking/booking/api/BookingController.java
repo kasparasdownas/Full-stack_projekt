@@ -43,6 +43,23 @@ public class BookingController {
                 .body(BookingResponse.from(bookingReservation));
     }
 
+    @PostMapping("/api/bookings/batch")
+    public ResponseEntity<BookingBatchResponse> createBatchBooking(
+            @Valid @RequestBody BookingBatchCreateRequest request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        List<BookingResponse> bookings = bookingWriteService.reserveSeats(
+                        UUID.fromString(authenticatedUser.userId()),
+                        request.eventId(),
+                        request.seatIds()
+                ).stream()
+                .map(BookingResponse::from)
+                .toList();
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new BookingBatchResponse(bookings));
+    }
+
     @DeleteMapping("/api/bookings/{bookingId}")
     public ResponseEntity<Void> cancelBooking(
             @PathVariable UUID bookingId,
@@ -57,5 +74,45 @@ public class BookingController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         return ResponseEntity.ok(bookingQueryService.listUserBookings(UUID.fromString(authenticatedUser.userId())));
+    }
+
+    @PostMapping("/api/events/{eventId}/waitlist")
+    public ResponseEntity<Void> joinWaitlist(
+            @PathVariable UUID eventId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        bookingWriteService.joinWaitlist(UUID.fromString(authenticatedUser.userId()), eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/api/events/{eventId}/waitlist")
+    public ResponseEntity<Void> leaveWaitlist(
+            @PathVariable UUID eventId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        bookingWriteService.leaveWaitlist(UUID.fromString(authenticatedUser.userId()), eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/api/users/me/waitlist")
+    public ResponseEntity<List<WaitlistEntrySummaryResponse>> userWaitlist(
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(bookingQueryService.listUserWaitlist(UUID.fromString(authenticatedUser.userId())));
+    }
+
+    @GetMapping("/api/admin/events/{eventId}/bookings")
+    public ResponseEntity<List<AdminEventBookingSummaryResponse>> adminEventBookings(@PathVariable UUID eventId) {
+        return ResponseEntity.ok(bookingQueryService.listEventBookingsForAdmin(eventId));
+    }
+
+    @GetMapping("/api/admin/events/{eventId}/waitlist")
+    public ResponseEntity<List<AdminWaitlistEntryResponse>> adminEventWaitlist(@PathVariable UUID eventId) {
+        return ResponseEntity.ok(bookingQueryService.listEventWaitlistForAdmin(eventId));
+    }
+
+    @GetMapping("/api/admin/email-outbox")
+    public ResponseEntity<List<EmailOutboxSummaryResponse>> adminEmailOutbox() {
+        return ResponseEntity.ok(bookingQueryService.listEmailOutbox());
     }
 }

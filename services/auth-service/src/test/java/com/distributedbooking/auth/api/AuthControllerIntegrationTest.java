@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,6 +50,7 @@ class AuthControllerIntegrationTest {
     @Test
     void registerCreatesUser() throws Exception {
         mockMvc.perform(post("/api/auth/register")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -65,6 +67,7 @@ class AuthControllerIntegrationTest {
     @Test
     void loginAndMeFlowReturnsAuthenticatedProfile() throws Exception {
         MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -85,6 +88,7 @@ class AuthControllerIntegrationTest {
     @Test
     void logoutClearsCookieAndSession() throws Exception {
         MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -101,7 +105,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email", is("alice@example.com")));
 
-        MvcResult logoutResult = mockMvc.perform(post("/api/auth/logout").cookie(authCookie))
+        MvcResult logoutResult = mockMvc.perform(post("/api/auth/logout").with(csrf()).cookie(authCookie))
                 .andExpect(status().isNoContent())
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
                 .andReturn();
@@ -112,9 +116,30 @@ class AuthControllerIntegrationTest {
 
     @Test
     void logoutWithoutSessionStillReturnsNoContent() throws Exception {
-        mockMvc.perform(post("/api/auth/logout"))
+        mockMvc.perform(post("/api/auth/logout").with(csrf()))
                 .andExpect(status().isNoContent())
                 .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));
+    }
+
+    @Test
+    void csrfEndpointSetsReadableTokenCookie() throws Exception {
+        mockMvc.perform(get("/api/auth/csrf"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("XSRF-TOKEN=")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Path=/")));
+    }
+
+    @Test
+    void unsafeRequestWithoutCsrfIsRejected() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "alice@example.com",
+                                  "password": "Password123!"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     private static Cookie extractAuthCookie(MvcResult result) {

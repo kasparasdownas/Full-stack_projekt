@@ -1,6 +1,7 @@
 package com.distributedbooking.booking.domain;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -61,6 +62,7 @@ class BookingWriteServiceIntegrationTest {
     private NamedParameterJdbcTemplate jdbcTemplate;
 
     private Cookie authCookie;
+    private Cookie adminAuthCookie;
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
@@ -72,7 +74,8 @@ class BookingWriteServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        authCookie = createAuthCookie(USER_ID, "alice@example.com");
+        authCookie = createAuthCookie(USER_ID, "alice@example.com", "USER");
+        adminAuthCookie = createAuthCookie(UUID.fromString("11111111-1111-1111-1111-111111111111"), "admin@example.com", "ADMIN");
         jdbcTemplate.getJdbcOperations().update("DELETE FROM bookings");
     }
 
@@ -87,6 +90,7 @@ class BookingWriteServiceIntegrationTest {
     @Test
     void createBookingReturnsCreatedBooking() throws Exception {
         mockMvc.perform(post("/api/bookings")
+                        .with(csrf())
                         .cookie(authCookie)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -108,6 +112,7 @@ class BookingWriteServiceIntegrationTest {
         bookingWriteService.reserveSeat(USER_ID, EVENT_ID, SEAT_A01);
 
         mockMvc.perform(post("/api/bookings")
+                        .with(csrf())
                         .cookie(authCookie)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -123,6 +128,7 @@ class BookingWriteServiceIntegrationTest {
     @Test
     void createBookingReturnsEventNotFound() throws Exception {
         mockMvc.perform(post("/api/bookings")
+                        .with(csrf())
                         .cookie(authCookie)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -138,6 +144,7 @@ class BookingWriteServiceIntegrationTest {
     @Test
     void createBookingReturnsSeatNotFoundWhenSeatBelongsToAnotherEvent() throws Exception {
         mockMvc.perform(post("/api/bookings")
+                        .with(csrf())
                         .cookie(authCookie)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -153,6 +160,7 @@ class BookingWriteServiceIntegrationTest {
     @Test
     void createBookingRequiresAuthentication() throws Exception {
         mockMvc.perform(post("/api/bookings")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -162,6 +170,20 @@ class BookingWriteServiceIntegrationTest {
                                 """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void createBookingRejectsMissingCsrfToken() throws Exception {
+        mockMvc.perform(post("/api/bookings")
+                        .cookie(authCookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "eventId": "44444444-4444-4444-4444-444444444444",
+                                  "seatId": "00000000-0000-0000-0000-000000000001"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -200,10 +222,64 @@ class BookingWriteServiceIntegrationTest {
     }
 
     @Test
+    void adminCanViewBookingsForEvent() throws Exception {
+        bookingWriteService.reserveSeat(USER_ID, EVENT_ID, SEAT_A02);
+        bookingWriteService.reserveSeat(OTHER_USER_ID, EVENT_ID, SEAT_A01);
+
+        mockMvc.perform(get("/api/admin/events/{eventId}/bookings", EVENT_ID).cookie(adminAuthCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].userId").value(OTHER_USER_ID.toString()))
+                .andExpect(jsonPath("$[0].userEmail").value("bob@example.com"))
+                .andExpect(jsonPath("$[0].seatId").value(SEAT_A01.toString()))
+                .andExpect(jsonPath("$[0].seatNumber").value("A01"))
+                .andExpect(jsonPath("$[0].bookedAt").isNotEmpty())
+                .andExpect(jsonPath("$[1].userId").value(USER_ID.toString()))
+                .andExpect(jsonPath("$[1].userEmail").value("alice@example.com"))
+                .andExpect(jsonPath("$[1].seatNumber").value("A02"));
+    }
+
+    @Test
+    void adminEventBookingsReturnsEmptyArrayForExistingEventWithoutBookings() throws Exception {
+        mockMvc.perform(get("/api/admin/events/{eventId}/bookings", OTHER_EVENT_ID).cookie(adminAuthCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void adminEventBookingsRejectsRegularUsers() throws Exception {
+        mockMvc.perform(get("/api/admin/events/{eventId}/bookings", EVENT_ID).cookie(authCookie))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+    }
+
+    @Test
+    void adminEventBookingsRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/admin/events/{eventId}/bookings", EVENT_ID))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void adminEventBookingsReturnsEventNotFound() throws Exception {
+        mockMvc.perform(get("/api/admin/events/{eventId}/bookings", UUID.fromString("66666666-6666-6666-6666-666666666666"))
+                        .cookie(adminAuthCookie))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("EVENT_NOT_FOUND"));
+    }
+
+    @Test
+    void adminEventBookingsRejectsMalformedEventId() throws Exception {
+        mockMvc.perform(get("/api/admin/events/not-a-uuid/bookings").cookie(adminAuthCookie))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    @Test
     void cancelBookingDeletesOwnedBooking() throws Exception {
         BookingReservation booking = bookingWriteService.reserveSeat(USER_ID, EVENT_ID, SEAT_A01);
 
-        mockMvc.perform(delete("/api/bookings/{bookingId}", booking.id()).cookie(authCookie))
+        mockMvc.perform(delete("/api/bookings/{bookingId}", booking.id()).with(csrf()).cookie(authCookie))
                 .andExpect(status().isNoContent());
 
         Integer bookingCount = jdbcTemplate.queryForObject(
@@ -217,7 +293,7 @@ class BookingWriteServiceIntegrationTest {
 
     @Test
     void cancelBookingReturnsNotFoundForMissingBooking() throws Exception {
-        mockMvc.perform(delete("/api/bookings/{bookingId}", UUID.randomUUID()).cookie(authCookie))
+        mockMvc.perform(delete("/api/bookings/{bookingId}", UUID.randomUUID()).with(csrf()).cookie(authCookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BOOKING_NOT_FOUND"));
     }
@@ -226,23 +302,23 @@ class BookingWriteServiceIntegrationTest {
     void cancelBookingReturnsNotFoundForAnotherUsersBooking() throws Exception {
         BookingReservation otherUsersBooking = bookingWriteService.reserveSeat(OTHER_USER_ID, OTHER_EVENT_ID, SEAT_B02);
 
-        mockMvc.perform(delete("/api/bookings/{bookingId}", otherUsersBooking.id()).cookie(authCookie))
+        mockMvc.perform(delete("/api/bookings/{bookingId}", otherUsersBooking.id()).with(csrf()).cookie(authCookie))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BOOKING_NOT_FOUND"));
     }
 
     @Test
     void cancelBookingRejectsMalformedBookingId() throws Exception {
-        mockMvc.perform(delete("/api/bookings/not-a-uuid").cookie(authCookie))
+        mockMvc.perform(delete("/api/bookings/not-a-uuid").with(csrf()).cookie(authCookie))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
-    private Cookie createAuthCookie(UUID userId, String email) {
+    private Cookie createAuthCookie(UUID userId, String email, String role) {
         String token = Jwts.builder()
                 .subject(userId.toString())
                 .claim("email", email)
-                .claim("role", "USER")
+                .claim("role", role)
                 .issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(Instant.now().plusSeconds(3600)))
                 .signWith(Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8)))

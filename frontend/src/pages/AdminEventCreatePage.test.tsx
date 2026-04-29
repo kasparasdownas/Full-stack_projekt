@@ -31,6 +31,7 @@ describe('AdminEventCreatePage', () => {
       venue: 'Building 101',
       seatsTotal: 14,
       seatsAvailable: 14,
+      status: 'PUBLISHED',
     });
 
     const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ describe('AdminEventCreatePage', () => {
         dateTime: new Date('2026-06-01T19:30').toISOString(),
         venue: 'Building 101',
         seatCapacity: 14,
+        status: 'PUBLISHED',
       }),
     );
 
