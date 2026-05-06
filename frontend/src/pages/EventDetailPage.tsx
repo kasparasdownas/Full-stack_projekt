@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ApiError } from '../api/client';
 import { useCurrentUserQuery } from '../features/auth/useAuth';
-import { useCreateBatchBookingMutation, useWaitlistMutation } from '../features/bookings/useBookings';
+import { useCreateBatchBookingMutation, useMyWaitlistQuery, useWaitlistMutation } from '../features/bookings/useBookings';
 import { useEventQuery, useEventSeatsQuery } from '../features/events/useEvents';
 
 export function EventDetailPage() {
@@ -14,6 +14,7 @@ export function EventDetailPage() {
   const currentUserQuery = useCurrentUserQuery();
   const bookingMutation = useCreateBatchBookingMutation();
   const waitlistMutation = useWaitlistMutation();
+  const myWaitlistQuery = useMyWaitlistQuery();
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
 
@@ -30,6 +31,8 @@ export function EventDetailPage() {
   }
 
   const soldOut = eventQuery.data.seatsAvailable === 0;
+  const isAuthenticated = Boolean(currentUserQuery.data);
+  const alreadyWaitlisted = Boolean(myWaitlistQuery.data?.some((entry) => entry.eventId === eventId));
   const eventIsPast = new Date(eventQuery.data.dateTime).getTime() <= Date.now();
   const bookingOpen = eventQuery.data.status === 'PUBLISHED' && !eventIsPast;
   const bookingDisabledReason = eventQuery.data.status === 'CANCELED'
@@ -95,116 +98,156 @@ export function EventDetailPage() {
         ← Back to events
       </Link>
 
-      <div className="panel detail-hero">
-        <div>
+      <div className="panel event-detail-card">
+        <div className="event-detail-main">
           <p className="eyebrow">Event detail</p>
-          <h1>{eventQuery.data.title}</h1>
-          <span className={`status-pill status-${eventQuery.data.status.toLowerCase()}`}>{eventQuery.data.status}</span>
-          {soldOut ? <span className="availability-pill availability-pill-alert">Sold out</span> : null}
+          <h1 className="event-detail-title">{eventQuery.data.title}</h1>
+          <div className="event-detail-badges">
+            <span className={`status-pill status-${eventQuery.data.status.toLowerCase()}`}>{eventQuery.data.status}</span>
+            {soldOut ? <span className="status-pill status-canceled">Sold out</span> : null}
+          </div>
           <p className="detail-meta">
             {new Date(eventQuery.data.dateTime).toLocaleString()} · {eventQuery.data.venue}
           </p>
           <p className="hero-text">{eventQuery.data.description}</p>
+        </div>
+
+        <aside className="event-detail-sidebar" aria-label="Event summary">
+          <div className="summary-stat">
+            <span className="stat-label">Total seats</span>
+            <strong>{eventQuery.data.seatsTotal}</strong>
+          </div>
+          <div className="summary-stat">
+            <span className="stat-label">Available now</span>
+            <strong>{eventQuery.data.seatsAvailable}</strong>
+          </div>
+          <div className={`summary-stat ${soldOut ? 'summary-stat-alert' : ''}`}>
+            <span className="stat-label">Booking status</span>
+            <strong>{soldOut ? 'Sold out' : 'Available'}</strong>
+          </div>
           {currentUserQuery.data?.role === 'ADMIN' ? (
             <Link to={`/admin/events/${eventId}/bookings`} className="button button-secondary">
               View bookings
             </Link>
           ) : null}
-        </div>
-
-        <div className="detail-stats">
-          <div className="stat-card">
-            <span className="stat-label">Total seats</span>
-            <strong>{eventQuery.data.seatsTotal}</strong>
-          </div>
-          <div className="stat-card">
-            <span className="stat-label">Available now</span>
-            <strong>{eventQuery.data.seatsAvailable}</strong>
-          </div>
-        </div>
+        </aside>
       </div>
 
-      <div className="panel">
-        <div className="section-heading">
-          <h2>Seat availability</h2>
+      <div className="panel seat-panel">
+        <div className="seat-panel-header">
+          <div>
+            <p className="eyebrow">Seat map</p>
+            <h2>Seat availability</h2>
+          </div>
+          <span className={`status-pill ${soldOut ? 'status-canceled' : 'status-published'}`}>
+            {soldOut ? 'Sold out' : `${eventQuery.data.seatsAvailable} available`}
+          </span>
         </div>
 
-        {soldOut ? (
-          <p className="inline-error" role="status">
-            Sold out. No seats are currently available for this event.
-          </p>
+        <div className="notice-stack">
+          {soldOut ? (
+            <p className="notice notice-error" role="status">
+              Sold out. No seats are currently available for this event.
+            </p>
+          ) : null}
+
+          {bookingDisabledReason ? (
+            <p className="notice notice-error" role="status">
+              {bookingDisabledReason}
+            </p>
+          ) : null}
+
+          {feedback ? (
+            <p className={feedback.kind === 'success' ? 'notice notice-success' : 'notice notice-error'} role={feedback.kind === 'success' ? 'status' : 'alert'}>
+              {feedback.message}
+            </p>
+          ) : null}
+        </div>
+
+        {!isAuthenticated ? (
+          <div className="panel subtle-panel">
+            <p className="muted">Log in to select seats, book tickets, or join the waitlist.</p>
+            <Link className="button button-primary" to="/login">
+              Log in to book seats
+            </Link>
+          </div>
         ) : null}
 
-        {bookingDisabledReason ? (
-          <p className="inline-error" role="status">
-            {bookingDisabledReason}
-          </p>
-        ) : null}
+        <div className="seat-map-shell">
+          <div className="cinema-screen">Screen / stage</div>
 
-        {feedback ? (
-          <p className={feedback.kind === 'success' ? 'inline-success' : 'inline-error'} role={feedback.kind === 'success' ? 'status' : 'alert'}>
-            {feedback.message}
-          </p>
-        ) : null}
+          <div className="seat-legend" aria-label="Seat map legend">
+            <span><i className="legend-dot legend-available" /> Available</span>
+            <span><i className="legend-dot legend-selected" /> Selected</span>
+            <span><i className="legend-dot legend-booked" /> Booked</span>
+          </div>
 
-        <div className="cinema-screen">Screen / stage</div>
+          <div className="cinema-map">
+            {Object.entries(seatRows).map(([row, seats]) => (
+              <div key={row} className="seat-row">
+                <span className="row-label">{row}</span>
+                <div className="seat-row-grid">
+                  {seats.map((seat) => {
+                    const selectable = isAuthenticated && seat.available && bookingOpen;
+                    const selected = selectedSeatIds.includes(seat.seatId);
 
-        <div className="cinema-map">
-          {Object.entries(seatRows).map(([row, seats]) => (
-            <div key={row} className="seat-row">
-              <span className="row-label">{row}</span>
-              <div className="seat-row-grid">
-                {seats.map((seat) => {
-                  const selectable = seat.available && bookingOpen;
-                  const selected = selectedSeatIds.includes(seat.seatId);
-
-                  return (
-                    <button
-                      key={seat.seatId}
-                      className={`cinema-seat ${seat.available ? 'seat-available' : 'seat-booked'} ${selected ? 'seat-selected' : ''}`}
-                      type="button"
-                      disabled={!selectable || bookingMutation.isPending}
-                      aria-pressed={selected}
-                      onClick={() => toggleSeat(seat.seatId)}
-                    >
-                      <span>{seat.seatNumber}</span>
-                      <strong>{seat.available ? (selected ? 'Selected' : 'Free') : 'Booked'}</strong>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={seat.seatId}
+                        className={`cinema-seat ${seat.available ? 'seat-available' : 'seat-booked'} ${selected ? 'seat-selected' : ''}`}
+                        type="button"
+                        disabled={!selectable || bookingMutation.isPending}
+                        aria-pressed={selected}
+                        onClick={() => toggleSeat(seat.seatId)}
+                      >
+                        <span>{seat.seatNumber}</span>
+                        <strong>{seat.available ? (selected ? 'Selected' : 'Free') : 'Booked'}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        <div className="booking-summary">
-          <p>
-            Selected seats:{' '}
-            <strong>
-              {selectedSeatIds.length === 0
-                ? 'None'
-                : seatsQuery.data.filter((seat) => selectedSeatIds.includes(seat.seatId)).map((seat) => seat.seatNumber).join(', ')}
-            </strong>
-          </p>
-          <button
-            className="button button-primary"
-            type="button"
-            disabled={!bookingOpen || selectedSeatIds.length === 0 || bookingMutation.isPending}
-            onClick={() => void handleSeatBooking()}
-          >
-            {bookingMutation.isPending ? 'Booking seats...' : 'Book selected seats'}
-          </button>
-          {soldOut && bookingOpen ? (
+        {isAuthenticated && bookingOpen && !soldOut ? (
+          <div className="booking-summary booking-summary-sticky">
+            <p>
+              Selected seats:{' '}
+              <strong>
+                {selectedSeatIds.length === 0
+                  ? 'None'
+                  : seatsQuery.data.filter((seat) => selectedSeatIds.includes(seat.seatId)).map((seat) => seat.seatNumber).join(', ')}
+              </strong>
+            </p>
+            <button
+              className="button button-primary"
+              type="button"
+              disabled={selectedSeatIds.length === 0 || bookingMutation.isPending}
+              onClick={() => void handleSeatBooking()}
+            >
+              {bookingMutation.isPending ? 'Booking seats...' : 'Book selected seats'}
+            </button>
+          </div>
+        ) : null}
+
+        {isAuthenticated && soldOut && bookingOpen ? (
+          <div className="booking-summary booking-summary-sticky">
+            <p>
+              <strong>Sold out</strong>
+              <span className="muted"> Join the waitlist to be notified if a seat opens.</span>
+            </p>
             <button
               className="button button-secondary"
               type="button"
-              disabled={waitlistMutation.isPending}
+              disabled={waitlistMutation.isPending || alreadyWaitlisted}
               onClick={() => void handleJoinWaitlist()}
             >
-              {waitlistMutation.isPending ? 'Joining waitlist...' : 'Join waitlist'}
+              {alreadyWaitlisted ? 'Already on waitlist' : waitlistMutation.isPending ? 'Joining waitlist...' : 'Join waitlist'}
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

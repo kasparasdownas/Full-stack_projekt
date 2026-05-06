@@ -20,10 +20,10 @@ export function AdminEmailOutboxPage() {
       </div>
       <div className="panel">
         {emailQuery.data.length === 0 ? (
-          <p className="muted">No mock emails have been created yet.</p>
+          <p className="muted">No mock emails have been created yet. Booking confirmations, cancellation receipts, and waitlist notifications will appear here.</p>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>Created</th>
@@ -38,7 +38,7 @@ export function AdminEmailOutboxPage() {
                     <td>{new Date(email.createdAt).toLocaleString()}</td>
                     <td>{email.recipientEmail}</td>
                     <td>{email.subject}</td>
-                    <td>{email.body}</td>
+                    <td className="email-body-cell">{email.body}</td>
                   </tr>
                 ))}
               </tbody>

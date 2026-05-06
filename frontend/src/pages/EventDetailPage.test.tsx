@@ -10,6 +10,7 @@ const useEventSeatsQueryMock = vi.fn();
 const mutateAsyncMock = vi.fn();
 const waitlistMutateAsyncMock = vi.fn();
 const useCurrentUserQueryMock = vi.fn();
+const useMyWaitlistQueryMock = vi.fn();
 
 vi.mock('../features/events/useEvents', () => ({
   useEventQuery: () => useEventQueryMock(),
@@ -25,6 +26,7 @@ vi.mock('../features/bookings/useBookings', () => ({
     mutateAsync: mutateAsyncMock,
     isPending: false,
   }),
+  useMyWaitlistQuery: () => useMyWaitlistQueryMock(),
   useWaitlistMutation: () => ({
     mutateAsync: waitlistMutateAsyncMock,
     isPending: false,
@@ -60,6 +62,11 @@ describe('EventDetailPage', () => {
     useCurrentUserQueryMock.mockReturnValue({
       data: { id: 'user-1', name: 'Alice', email: 'alice@example.com', role: 'USER' },
     });
+    useMyWaitlistQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: [],
+    });
   });
 
   function renderPage(queryClient: QueryClient) {
@@ -81,7 +88,7 @@ describe('EventDetailPage', () => {
 
     expect(screen.getByRole('button', { name: /A01/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Book selected seats' })).toBeDisabled();
-    expect(screen.getByText('Booked')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /A02/i })).toHaveTextContent('Booked');
     expect(screen.queryByText('Sold out')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'View bookings' })).not.toBeInTheDocument();
   });
@@ -129,12 +136,68 @@ describe('EventDetailPage', () => {
 
     renderPage(queryClient);
 
-    expect(screen.getByText('Sold out')).toBeInTheDocument();
+    expect(screen.getAllByText('Sold out').length).toBeGreaterThan(0);
     expect(screen.getByText('Sold out. No seats are currently available for this event.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Book selected seats' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Book selected seats' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Join waitlist' })).toBeInTheDocument();
-    expect(screen.getAllByText('Booked')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /Booked/i })).toHaveLength(2);
     expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
+  it('shows a login action when there is no authenticated user', () => {
+    useCurrentUserQueryMock.mockReturnValue({ data: null });
+
+    const queryClient = new QueryClient();
+
+    renderPage(queryClient);
+
+    expect(screen.getByRole('link', { name: 'Log in to book seats' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('button', { name: /A01/i })).toBeDisabled();
+  });
+
+  it('shows already-on-waitlist state for sold-out events', () => {
+    useEventQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: {
+        id: 'event-1',
+        title: 'Spring Concert',
+        description: 'Live student concert.',
+        dateTime: '2026-05-18T19:30:00Z',
+        venue: 'DTU Hall A',
+        seatsTotal: 24,
+        seatsAvailable: 0,
+        status: 'PUBLISHED',
+      },
+    });
+    useEventSeatsQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: [
+        { seatId: 'seat-1', seatNumber: 'A01', available: false },
+      ],
+    });
+    useMyWaitlistQueryMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: [
+        {
+          id: 'waitlist-1',
+          eventId: 'event-1',
+          eventTitle: 'Spring Concert',
+          eventDateTime: '2026-05-18T19:30:00Z',
+          venue: 'DTU Hall A',
+          createdAt: '2026-05-01T18:00:00Z',
+          notifiedAt: null,
+        },
+      ],
+    });
+
+    const queryClient = new QueryClient();
+
+    renderPage(queryClient);
+
+    expect(screen.getByRole('button', { name: 'Already on waitlist' })).toBeDisabled();
   });
 
   it('submits a booking request and refreshes event queries after success', async () => {

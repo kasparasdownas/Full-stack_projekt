@@ -5,21 +5,21 @@ export function LandingPage() {
     <section className="hero">
       <div className="hero-copy">
         <p className="eyebrow">Distributed booking platform</p>
-        <h1>Browse events and reserve seats without double booking.</h1>
+        <h1>Book seats, manage events, and prove concurrency safety.</h1>
         <p className="hero-text">
-          The current slice already covers identity, event browsing, live seat availability, and single-seat booking on
-          top of a concurrency-safe shared schema.
+          Browse published events, select multiple seats, join waitlists for sold-out events, and use admin tools to
+          manage the full event lifecycle.
         </p>
 
-        <div className="hero-actions">
-          <Link to="/register" className="button button-primary">
-            Create account
+        <div className="hero-actions button-row">
+          <Link to="/events" className="button button-primary">
+            Browse events
           </Link>
           <Link to="/login" className="button button-secondary">
             Log in
           </Link>
-          <Link to="/events" className="button button-ghost">
-            Browse events
+          <Link to="/register" className="button button-ghost">
+            Create account
           </Link>
         </div>
       </div>
@@ -34,8 +34,8 @@ export function LandingPage() {
           <strong>JSON REST via one gateway</strong>
         </div>
         <div className="stat-card">
-          <span className="stat-label">Concurrency guard</span>
-          <strong>Unique booking seat constraint already present</strong>
+          <span className="stat-label">Product flow</span>
+          <strong>Multi-seat booking, waitlist, and mock email evidence</strong>
         </div>
       </div>
     </section>

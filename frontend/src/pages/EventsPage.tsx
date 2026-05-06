@@ -71,9 +71,11 @@ export function EventsPage() {
 
             <p className="muted">{new Date(event.dateTime).toLocaleString()}</p>
 
-            <Link className="button button-secondary" to={`/events/${event.id}`}>
-              View event
-            </Link>
+            <div className="event-card-actions">
+              <Link className="button button-secondary" to={`/events/${event.id}`}>
+                View event
+              </Link>
+            </div>
           </article>
         ))}
       </div>

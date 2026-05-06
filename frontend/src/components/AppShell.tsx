@@ -26,17 +26,19 @@ export function AppShell() {
           Distributed Event Booking
         </Link>
 
-        <nav className="topbar-nav">
-          <Link to="/events">Events</Link>
+        <nav className="topbar-nav" aria-label="Main navigation">
+          <div className="topbar-links">
+            <Link className="nav-pill" to="/events">Events</Link>
+            {currentUserQuery.data ? <Link className="nav-pill" to="/bookings">My bookings</Link> : null}
+            {currentUserQuery.data?.role === 'ADMIN' ? (
+              <>
+                <Link className="nav-pill" to="/admin/events">Admin events</Link>
+                <Link className="nav-pill" to="/admin/email-outbox">Email outbox</Link>
+              </>
+            ) : null}
+          </div>
           {currentUserQuery.data ? (
-            <>
-              {currentUserQuery.data.role === 'ADMIN' ? (
-                <>
-                  <Link to="/admin/events">Admin events</Link>
-                  <Link to="/admin/email-outbox">Email outbox</Link>
-                </>
-              ) : null}
-              <Link to="/bookings">My bookings</Link>
+            <div className="topbar-session">
               <span className="topbar-user">
                 {currentUserQuery.data.name} ({currentUserQuery.data.role})
               </span>
@@ -48,12 +50,12 @@ export function AppShell() {
               >
                 {logoutMutation.isPending ? 'Logging out...' : 'Log out'}
               </button>
-            </>
+            </div>
           ) : (
-            <>
-              <Link to="/login">Log in</Link>
-              <Link to="/register">Register</Link>
-            </>
+            <div className="topbar-session">
+              <Link className="nav-pill" to="/login">Log in</Link>
+              <Link className="nav-pill nav-pill-primary" to="/register">Register</Link>
+            </div>
           )}
         </nav>
       </header>

@@ -80,7 +80,12 @@ export function MyBookingsPage() {
       ) : null}
 
       {!bookingsQuery.isLoading && !bookingsQuery.isError && bookingsQuery.data?.length ? (
-        <div className="card-grid">
+        <div className="panel stack section-panel">
+          <div>
+            <p className="eyebrow">Active reservations</p>
+            <h2>Your seats</h2>
+          </div>
+          <div className="card-grid">
           {bookingsQuery.data.map((booking) => {
             const eventIsPast = new Date(booking.eventDateTime).getTime() <= Date.now();
 
@@ -116,9 +121,11 @@ export function MyBookingsPage() {
                     {eventIsPast ? 'Past event' : pendingBookingId === booking.id ? 'Cancelling...' : 'Cancel booking'}
                   </button>
                 </div>
+                {eventIsPast ? <p className="field-hint">Past event bookings cannot be cancelled.</p> : null}
               </article>
             );
           })}
+          </div>
         </div>
       ) : null}
 
@@ -139,7 +146,12 @@ export function MyBookingsPage() {
       ) : null}
 
       {!waitlistQuery.isLoading && !waitlistQuery.isError && waitlistQuery.data?.length ? (
-        <div className="card-grid">
+        <div className="panel stack section-panel">
+          <div>
+            <p className="eyebrow">Waiting list</p>
+            <h2>Events you are waiting for</h2>
+          </div>
+          <div className="card-grid">
           {waitlistQuery.data.map((entry) => (
             <article key={entry.id} className="panel event-card booking-card">
               <h3>{entry.eventTitle}</h3>
@@ -161,6 +173,7 @@ export function MyBookingsPage() {
               </div>
             </article>
           ))}
+          </div>
         </div>
       ) : null}
     </section>
