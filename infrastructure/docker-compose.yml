@@ -1,3 +1,5 @@
+name: ${COMPOSE_PROJECT_NAME:-distributed-booking}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,7 +10,11 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-booking_app} -d ${POSTGRES_DB:-bookingdb}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-booking_app} -d ${POSTGRES_DB:-bookingdb}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -23,7 +29,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-booking_app}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
       APP_JWT_SECRET: ${APP_JWT_SECRET:-replace-this-with-a-long-development-secret-at-least-32-chars}
-      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080,http://localhost:3000}
       APP_AUTH_COOKIE_NAME: ${APP_AUTH_COOKIE_NAME:-booking_access_token}
       APP_AUTH_COOKIE_SECURE: ${APP_AUTH_COOKIE_SECURE:-false}
       APP_AUTH_COOKIE_SAME_SITE: ${APP_AUTH_COOKIE_SAME_SITE:-Lax}
@@ -33,12 +39,14 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8081/actuator/health >/dev/null || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
-    ports:
-      - "8081:8081"
 
   event-service:
     build:
@@ -50,7 +58,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-booking_app}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
       APP_JWT_SECRET: ${APP_JWT_SECRET:-replace-this-with-a-long-development-secret-at-least-32-chars}
-      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080,http://localhost:3000}
       APP_AUTH_COOKIE_NAME: ${APP_AUTH_COOKIE_NAME:-booking_access_token}
       APP_SEED_DEMO_DATA: "true"
     depends_on:
@@ -59,12 +67,14 @@ services:
       auth-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8082/actuator/health >/dev/null || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
-    ports:
-      - "8082:8082"
 
   booking-service:
     build:
@@ -76,7 +86,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-booking_app}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-booking_app}
       APP_JWT_SECRET: ${APP_JWT_SECRET:-replace-this-with-a-long-development-secret-at-least-32-chars}
-      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8080,http://localhost:3000}
       APP_AUTH_COOKIE_NAME: ${APP_AUTH_COOKIE_NAME:-booking_access_token}
     depends_on:
       postgres:
@@ -84,12 +94,14 @@ services:
       auth-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health >/dev/null || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:8083/actuator/health >/dev/null || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
-    ports:
-      - "8083:8083"
 
   gateway:
     build:
@@ -103,7 +115,7 @@ services:
       booking-service:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${GATEWAY_PORT:-8080}:8080"
 
 volumes:
   postgres-data:

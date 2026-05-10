@@ -1,0 +1,12 @@
+services:
+  auth-service:
+    ports:
+      - "8081:8081"
+
+  event-service:
+    ports:
+      - "8082:8082"
+
+  booking-service:
+    ports:
+      - "8083:8083"

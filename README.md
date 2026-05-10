@@ -1,64 +1,116 @@
 # Distributed Event Booking System
 
-A distributed full-stack event booking platform for the course `62595 Full stack development, operations and distributed systems`.
+Dette er et full-stack event-bookingsystem lavet til kurset `62595 Full stack development, operations and distributed systems`.
 
-This repository implements:
+Systemet kan køres direkte med Docker og indeholder både frontend, backend-services, database og gateway.
 
-- React + TypeScript frontend in CSR mode
-- Spring Boot services for auth, events, and booking
-- Shared PostgreSQL database
-- JSON REST APIs with OpenAPI docs
-- Nginx reverse proxy for one-origin deployment
-- Security-by-design controls, CI, deployment notes, and smoke demo material
+## Hurtig Start Til Bedømmelse
 
-## Repository Layout
+Den nemmeste måde at køre projektet på er med Docker. Man behøver ikke installere Java, Maven, Node eller PostgreSQL separat, hvis man bare vil starte hele systemet.
 
-- `frontend` React CSR application
-- `services/auth-service` registration, login, JWT cookie auth, profile endpoint
-- `services/event-service` event catalogue, seat lifecycle, admin event dashboard, event editing, status changes, and safe deletion
-- `services/booking-service` single-seat and multi-seat booking, owned booking history, future-only cancellation, waitlist, admin booking visibility, and mock email outbox
-- `infrastructure` nginx, compose, and deployment artifacts
-- `docs` architecture, API, security, and demo documentation
+Åbn en terminal i projektmappen og kør:
 
-## Current Scope
+```bash
+docker compose -f infrastructure/docker-compose.yml up --build
+```
 
-Delivered user flow:
+Åbn derefter:
 
-1. register or log in
-2. browse seeded demo events
-3. open an event
-4. view seat availability
-5. select and book one or more available seats from the cinema-style seat map
-6. review active bookings
-7. cancel an owned future booking
-8. join or leave a waitlist for sold-out events
-9. log out and clear the auth cookie
+```text
+http://localhost:8080
+```
 
-Delivered admin flow:
+Demo-login:
 
-1. log in as an `ADMIN`
-2. create, edit, publish, unpublish, cancel, and safely delete events
-3. generate and resize numbered seats from event capacity
-4. view bookings and waitlist entries for a specific event
-5. inspect the mock email outbox as demo evidence
+```text
+Admin:
+admin@example.com / Admin123!
 
-Still deferred:
+Brugere:
+alice@example.com / Password123!
+bob@example.com / Password123!
+```
 
-- multi-server deployment
+Hvis port `8080` allerede bruges af et andet program, kan projektet startes på en anden port, for eksempel `3000`:
 
-GraphQL remains out of scope because the project standardizes on REST APIs.
+```bash
+GATEWAY_PORT=3000 docker compose -f infrastructure/docker-compose.yml up --build
+```
 
-## Service Ports
+Åbn så:
 
-- Auth service: `8081`
-- Event service: `8082`
-- Booking service: `8083`
-- Gateway: `8080`
+```text
+http://localhost:3000
+```
+
+Stop projektet igen med:
+
+```bash
+docker compose -f infrastructure/docker-compose.yml down
+```
+
+## Hvad Projektet Indeholder
+
+Projektet består af:
+
+- en React-frontend skrevet i TypeScript
+- tre Spring Boot-services til login, events og bookinger
+- en PostgreSQL-database
+- en Nginx-gateway, så hele appen kan åbnes fra én adresse
+- REST API’er med JSON
+- Docker Compose til at starte hele systemet samlet
+- test- og demo-scripts til at vise de vigtigste flows
+
+## Mappestruktur
+
+- `frontend` indeholder React-applikationen
+- `services/auth-service` håndterer registrering, login, logout og brugeroplysninger
+- `services/event-service` håndterer events, sæder og admin-funktioner for events
+- `services/booking-service` håndterer bookinger, annulleringer, venteliste og mock e-mails
+- `infrastructure` indeholder Docker Compose og Nginx-konfiguration
+- `docs` indeholder dokumentation, API-beskrivelser, demo-noter og rapportmateriale
+
+## Funktioner I Appen
+
+Brugere kan:
+
+1. oprette en konto eller logge ind
+2. se events
+3. åbne et event og se sæder
+4. vælge et eller flere ledige sæder
+5. booke valgte sæder
+6. se egne bookinger
+7. annullere egne fremtidige bookinger
+8. skrive sig på venteliste ved udsolgte events
+9. logge ud igen
+
+Administratorer kan:
+
+1. logge ind som admin
+2. oprette og redigere events
+3. publicere, afpublicere, annullere og slette events
+4. ændre sædekapacitet, hvor systemet selv opretter nye sæder
+5. se bookinger og venteliste for et bestemt event
+6. se mock e-mail outbox som bevis på bekræftelser og notifikationer
+
+Det eneste større punkt, der stadig er fravalgt, er deployment på flere servere. Projektet er lavet til at køre samlet via Docker Compose.
+
+GraphQL er også fravalgt, fordi projektet bruger REST API’er.
+
+## Porte
+
+- Gateway/frontend: `8080` som standard
+- Gateway kan ændres med `GATEWAY_PORT`
+- Auth-service: intern port `8081`
+- Event-service: intern port `8082`
+- Booking-service: intern port `8083`
 - Frontend dev server: `5173`
 
-## API Endpoints
+I den normale Docker Compose-opsætning er backend-portene ikke åbnet direkte på computeren. Det gør det lettere at køre projektet ved siden af andre apps.
 
-Implemented:
+## API-Endpoints
+
+De vigtigste endpoints er:
 
 - `POST /api/auth/register`
 - `GET /api/auth/csrf`
@@ -86,27 +138,76 @@ Implemented:
 - `GET /api/admin/events/{eventId}/waitlist`
 - `GET /api/admin/email-outbox`
 
-## Prerequisites
+Mere detaljeret API-dokumentation ligger i [`docs/api-contracts.md`](docs/api-contracts.md).
+
+## Krav For At Køre Projektet
+
+For almindelig kørsel:
+
+- Docker
+- Docker Compose
+
+Kun hvis man vil udvikle uden Docker, skal man også bruge:
 
 - Java 21+
-- Node.js 20+ or newer
-- Maven 3.9+ for backend builds
-- Docker and Docker Compose for the full local stack
+- Node.js 20+
+- Maven 3.9+
 
-## Frontend Development
+## Kørsel Med Docker Compose
 
-From [`frontend`](/Users/km/Desktop/Desktop/Full-stack_projekt/frontend):
+Fra projektmappen:
 
 ```bash
+docker compose -f infrastructure/docker-compose.yml up --build
+```
+
+Gatewayen serverer frontend og sender API-kald videre til de rigtige backend-services.
+
+Hvis en anden app allerede bruger `8080`, kan man vælge en anden port:
+
+```bash
+GATEWAY_PORT=3000 docker compose -f infrastructure/docker-compose.yml up --build
+```
+
+Åbn derefter:
+
+```text
+http://localhost:3000
+```
+
+Hvis man bruger en helt anden port, kan man også angive, hvilken lokal adresse backend må acceptere:
+
+```bash
+GATEWAY_PORT=3001 APP_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3001 docker compose -f infrastructure/docker-compose.yml up --build
+```
+
+Hvis man vil fejlfinde backend-services direkte på `8081`, `8082` og `8083`, kan man bruge udviklingsopsætningen:
+
+```bash
+docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.dev.yml up --build
+```
+
+Hvis man vil køre to kopier af dette projekt samtidig, skal den ene kopi have et andet Compose-projektnavn:
+
+```bash
+COMPOSE_PROJECT_NAME=distributed-booking-copy GATEWAY_PORT=3001 docker compose -f infrastructure/docker-compose.yml up --build
+```
+
+## Frontend-Udvikling
+
+Hvis man vil arbejde direkte med frontenden:
+
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-The Vite dev server proxies `/api/auth`, `/api/events`, `/api/bookings`, `/api/users/me/bookings`, `/api/users/me/waitlist`, and admin booking/event routes to the local backend services.
+Vite dev serveren sender API-kald videre til backend-services.
 
-## Backend Development
+## Backend-Udvikling
 
-From the repository root:
+Hvis man vil køre backend-services uden Docker:
 
 ```bash
 mvn -pl services/auth-service spring-boot:run
@@ -114,21 +215,11 @@ mvn -pl services/event-service spring-boot:run
 mvn -pl services/booking-service spring-boot:run
 ```
 
-Run the auth service first because it applies the shared schema migrations for the shared database.
+Start `auth-service` først, fordi den kører databasemigrationerne.
 
-## Docker Compose
+## Verifikationsscripts
 
-From [`infrastructure/docker-compose.yml`](/Users/km/Desktop/Desktop/Full-stack_projekt/infrastructure/docker-compose.yml):
-
-```bash
-docker compose -f infrastructure/docker-compose.yml up --build
-```
-
-The gateway serves the frontend and proxies API traffic to the backend services.
-
-## Verification Scripts
-
-With the Docker Compose stack running on port `8080`, run:
+Når Docker-stacken kører på `8080`, kan disse scripts køres i en anden terminal:
 
 ```bash
 node scripts/smoke-test.mjs
@@ -136,24 +227,40 @@ node scripts/concurrency-demo.mjs
 node scripts/measure-baseline.mjs
 ```
 
-These scripts prove the main user/admin lifecycle flow, multi-seat booking, waitlist notification evidence, the database concurrency guard, and the baseline response times needed for the course verification notes.
+Hvis appen kører på en anden port, for eksempel `3000`, bruges `BOOKING_BASE_URL`:
 
-## Concurrency Demo
+```bash
+BOOKING_BASE_URL=http://localhost:3000 node scripts/smoke-test.mjs
+BOOKING_BASE_URL=http://localhost:3000 node scripts/concurrency-demo.mjs
+BOOKING_BASE_URL=http://localhost:3000 node scripts/measure-baseline.mjs
+```
 
-With the Docker Compose stack running on port `8080`, run:
+Scriptsene bruges til at vise:
+
+- at de vigtigste bruger- og adminflows virker
+- at multi-seat booking virker
+- at venteliste og mock e-mails virker
+- at systemet forhindrer dobbeltbooking af samme sæde
+- at de vigtigste sider og API’er svarer inden for en målbar baseline
+
+## Samtidighedsdemo
+
+Samtidighedsdemoen viser, at to brugere ikke kan booke det samme sæde samtidig.
+
+Kør:
 
 ```bash
 node scripts/concurrency-demo.mjs
 ```
 
-The script creates a one-seat demo event, races Alice and Bob against the same seat, and exits successfully only when one request succeeds and the other receives `SEAT_ALREADY_BOOKED`.
+Scriptet opretter et demo-event med ét sæde og lader Alice og Bob prøve at booke samme sæde på samme tid. Testen er kun godkendt, hvis én booking lykkes, og den anden får fejlen `SEAT_ALREADY_BOOKED`.
 
-## Documentation
+## Dokumentation
 
-- [Architecture](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/architecture.md)
-- [API Contracts](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/api-contracts.md)
-- [Security By Design](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/security-by-design.md)
-- [Deployment](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/deployment.md)
-- [Demo Script](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/demo.md)
-- [Deployment Evidence](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/deployment-evidence.md)
-- [Postman Collection](/Users/km/Desktop/Desktop/Full-stack_projekt/docs/postman/distributed-booking-current.postman_collection.json)
+- [Arkitektur](docs/architecture.md)
+- [API-kontrakter](docs/api-contracts.md)
+- [Security by Design](docs/security-by-design.md)
+- [Deployment-guide](docs/deployment.md)
+- [Demo-script](docs/demo.md)
+- [Deployment-evidence](docs/deployment-evidence.md)
+- [Postman Collection](docs/postman/distributed-booking-current.postman_collection.json)

@@ -57,8 +57,16 @@ public class AuthController {
 
     @GetMapping("/csrf")
     public ResponseEntity<Void> csrf(CsrfToken csrfToken) {
-        csrfToken.getToken();
-        return ResponseEntity.noContent().build();
+        ResponseCookie csrfCookie = ResponseCookie.from("XSRF-TOKEN", csrfToken.getToken())
+                .httpOnly(false)
+                .secure(authCookieProperties.secure())
+                .sameSite(authCookieProperties.sameSite())
+                .path("/")
+                .build();
+
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, csrfCookie.toString())
+                .build();
     }
 
     @GetMapping("/me")

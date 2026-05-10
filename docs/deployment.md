@@ -8,11 +8,13 @@ Multi-server deployment remains deferred. The current target still demonstrates 
 
 ## Services
 
-- `gateway`: nginx static frontend and reverse proxy on port `8080`
+- `gateway`: nginx static frontend and reverse proxy on port `8080` by default, configurable with `GATEWAY_PORT`
 - `auth-service`: registration, login, logout, CSRF bootstrap, and profile API
 - `event-service`: event reads and admin event creation
 - `booking-service`: booking writes, cancellation, user booking history, admin event booking visibility
 - `postgres`: internal PostgreSQL database, not published to the host
+
+The Compose project name defaults to `distributed-booking`, which avoids collisions with other local projects that also use an `infrastructure/docker-compose.yml` file.
 
 ## Debian 12 Runbook
 
@@ -41,6 +43,9 @@ cd Full-stack_projekt
 export APP_JWT_SECRET="<at-least-32-characters-production-secret>"
 export APP_AUTH_COOKIE_SECURE=false
 export APP_ALLOWED_ORIGINS="http://<vm-host-or-ip>:8080"
+export COMPOSE_PROJECT_NAME=distributed-booking
+# Optional: publish the gateway on another host port.
+export GATEWAY_PORT=8080
 ```
 
 4. Start the stack.
@@ -48,6 +53,16 @@ export APP_ALLOWED_ORIGINS="http://<vm-host-or-ip>:8080"
 ```bash
 docker compose -f infrastructure/docker-compose.yml up --build -d
 ```
+
+For local side-by-side testing with another app using `8080`, run this stack on another host port:
+
+```bash
+GATEWAY_PORT=3000 docker compose -f infrastructure/docker-compose.yml up --build -d
+```
+
+Then use `http://localhost:3000`. If you use a port that is not already listed in `APP_ALLOWED_ORIGINS`, set it explicitly before startup.
+
+If you need to run two copies of this exact project at the same time, use a different `COMPOSE_PROJECT_NAME` for one of them.
 
 5. Inspect runtime state.
 
@@ -81,6 +96,12 @@ If the VM is remote, set:
 
 ```bash
 export BOOKING_BASE_URL="http://<vm-host-or-ip>:8080"
+```
+
+If the local gateway uses another port, set:
+
+```bash
+export BOOKING_BASE_URL="http://localhost:3000"
 ```
 
 Expected results:
