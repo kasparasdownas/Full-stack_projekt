@@ -4,7 +4,7 @@ Dette er et full-stack event-bookingsystem lavet til kurset `62595 Full stack de
 
 Systemet kan køres direkte med Docker og indeholder både frontend, backend-services, database og gateway.
 
-## Hurtig Start Til Bedømmelse
+## Quick Start
 
 Den nemmeste måde at køre projektet på er med Docker. Man behøver ikke installere Java, Maven, Node eller PostgreSQL separat, hvis man bare vil starte hele systemet.
 
