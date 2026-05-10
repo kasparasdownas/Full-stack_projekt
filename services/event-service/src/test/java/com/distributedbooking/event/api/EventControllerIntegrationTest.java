@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
@@ -23,7 +24,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -34,6 +37,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 })
 @AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
+@Sql(scripts = {"/schema.sql", "/data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 class EventControllerIntegrationTest {
 
     private static final String JWT_SECRET = "integration-test-secret-value-with-more-than-thirty-two-chars";
@@ -94,7 +98,7 @@ class EventControllerIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/events")
+        MvcResult createdEvent = mockMvc.perform(post("/api/events")
                         .with(csrf())
                         .cookie(adminAuthCookie)
                         .contentType(APPLICATION_JSON)
@@ -103,21 +107,14 @@ class EventControllerIntegrationTest {
                 .andExpect(jsonPath("$.title", is("Admin Added Event")))
                 .andExpect(jsonPath("$.venue", is("Building 101")))
                 .andExpect(jsonPath("$.seatsTotal", is(14)))
-                .andExpect(jsonPath("$.seatsAvailable", is(14)));
+                .andExpect(jsonPath("$.seatsAvailable", is(14)))
+                .andReturn();
 
         mockMvc.perform(get("/api/events").cookie(userAuthCookie))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].title", hasItem("Admin Added Event")));
 
-        String createdEventId = mockMvc.perform(get("/api/events").cookie(userAuthCookie))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        String eventId = com.jayway.jsonpath.JsonPath.read(
-                createdEventId,
-                "$[?(@.title == 'Admin Added Event')].id[0]"
-        );
+        String eventId = JsonPath.read(createdEvent.getResponse().getContentAsString(), "$.id");
 
         mockMvc.perform(get("/api/events/" + eventId + "/seats").cookie(userAuthCookie))
                 .andExpect(status().isOk())
