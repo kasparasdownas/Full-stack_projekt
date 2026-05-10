@@ -5,7 +5,7 @@ export function LandingPage() {
     <section className="hero">
       <div className="hero-copy">
         <p className="eyebrow">Distributed booking platform</p>
-        <h1>Book seats, manage events, and prove concurrency safety.</h1>
+        <h1>Book seats, manage events, and prevent double booking.</h1>
         <p className="hero-text">
           Browse published events, select multiple seats, join waitlists for sold-out events, and use admin tools to
           manage the full event lifecycle.

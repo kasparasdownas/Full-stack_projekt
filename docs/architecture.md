@@ -6,7 +6,7 @@ The system is implemented as a distributed client/server application with three 
 
 - `auth-service` handles identity, registration, login, JWT cookie issuance, and current-user lookup
 - `event-service` handles event catalogue reads, admin event lifecycle management, seat generation/resizing, and seat availability reads
-- `booking-service` handles single-seat and multi-seat booking writes, owned cancellation, waitlist entries, mock email outbox rows, and the booking concurrency constraint
+- `booking-service` handles single-seat and multi-seat booking writes, owned cancellation, waitlist entries, mock email outbox rows, and the double-booking guard
 - `frontend` is a React CSR client that consumes REST APIs
 - `nginx` acts as the single entry point for static frontend delivery and reverse proxying
 
@@ -78,6 +78,8 @@ Responsibilities:
 Logical data ownership:
 
 - `bookings`
+- `waitlist_entries`
+- `email_outbox`
 
 ## Data Ownership Diagram
 
@@ -87,6 +89,9 @@ erDiagram
   EVENTS ||--o{ SEATS : "contains"
   EVENTS ||--o{ BOOKINGS : "booked for"
   SEATS ||--o{ BOOKINGS : "reserved by"
+  USERS ||--o{ WAITLIST_ENTRIES : "joins"
+  EVENTS ||--o{ WAITLIST_ENTRIES : "has"
+  BOOKINGS ||--o{ EMAIL_OUTBOX : "can create"
 
   USERS {
     uuid id
@@ -109,6 +114,20 @@ erDiagram
     uuid event_id
     uuid seat_id
     datetime booked_at
+  }
+  WAITLIST_ENTRIES {
+    uuid id
+    uuid user_id
+    uuid event_id
+    datetime created_at
+    datetime notified_at
+  }
+  EMAIL_OUTBOX {
+    uuid id
+    uuid user_id
+    uuid event_id
+    string subject
+    datetime created_at
   }
 ```
 

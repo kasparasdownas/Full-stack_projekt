@@ -10,8 +10,8 @@ Multi-server deployment remains deferred. The current target still demonstrates 
 
 - `gateway`: nginx static frontend and reverse proxy on port `8080` by default, configurable with `GATEWAY_PORT`
 - `auth-service`: registration, login, logout, CSRF bootstrap, and profile API
-- `event-service`: event reads and admin event creation
-- `booking-service`: booking writes, cancellation, user booking history, admin event booking visibility
+- `event-service`: event catalogue, seat availability, seat generation, and the admin event lifecycle
+- `booking-service`: single-seat and multi-seat booking, cancellation, user booking history, waitlist entries, email outbox rows, and admin booking visibility
 - `postgres`: internal PostgreSQL database, not published to the host
 
 The Compose project name defaults to `distributed-booking`, which avoids collisions with other local projects that also use an `infrastructure/docker-compose.yml` file.

@@ -18,7 +18,10 @@ CREATE TABLE events (
 CREATE TABLE seats (
     id UUID PRIMARY KEY,
     event_id UUID NOT NULL,
-    seat_number VARCHAR(10) NOT NULL
+    seat_number VARCHAR(10) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_seats_event_seat_number UNIQUE (event_id, seat_number),
+    CONSTRAINT uq_seats_event_id_id UNIQUE (event_id, id)
 );
 
 CREATE TABLE bookings (

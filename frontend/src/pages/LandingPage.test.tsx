@@ -12,6 +12,7 @@ describe('LandingPage', () => {
     );
 
     expect(screen.getByRole('heading', { name: /Book seats, manage events/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /prevent double booking/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Browse events' })).toHaveAttribute('href', '/events');
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: 'Create account' })).toHaveAttribute('href', '/register');

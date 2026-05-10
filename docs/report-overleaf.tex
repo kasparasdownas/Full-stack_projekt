@@ -22,6 +22,7 @@
 \usepackage{needspace}
 \usepackage{etoolbox}
 \usepackage{placeins}
+
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
 
 \definecolor{ink}{HTML}{172033}
@@ -106,9 +107,9 @@
   \thispagestyle{empty}
   \centering
   \vspace*{1.0cm}
-  \includegraphics[width=0.22\textwidth]{docs/pics/dtu.png}\par
+  \includegraphics[width=0.42\textwidth]{docs/pics/dtu.png}\par
   \vspace{1.35cm}
-  {\Large\textcolor{ink}{Full Stack Development (62595)}\par}
+  {\Large\textcolor{ink}{Full stack udvikling, drift og distribuerede systemer (62595)}\par}
   \vspace{1.0cm}
   {\Huge\bfseries\color{ink}Distributed Event Booking System\par}
   \vspace{0.8cm}
@@ -126,7 +127,7 @@
     10. maj 2026
   \end{minipage}
   \vfill
-  {\large\textcolor{muted}{Rapport til projektforløb i full-stack udvikling}\par}
+  {\large\underline{\href{https://github.com/kasparasdownas/Full-stack_projekt}{\textbf{Github link}}}\par}
 \end{titlepage}
 
 \tableofcontents
@@ -136,11 +137,11 @@
 
 Projektet er et distribueret event-bookingsystem. Brugere kan oprette en konto, logge ind, se events, vælge sæder på et sædekort, booke flere sæder på én gang, annullere fremtidige bookinger og tilmelde sig venteliste, hvis et event er udsolgt. Systemet har også et administratorområde, hvor administratorer kan oprette, redigere, publicere, afpublicere, annullere og slette events. Administratorer kan også se bookinger, ventelister og de e-mailbeskeder, som systemet ville sende.
 
-Det vigtigste tekniske problem er concurrency: to brugere må ikke kunne booke det samme sæde samtidigt. Det løses i databasen og booking-servicen gennem transaktioner og en unik databasebegrænsning på \code{(event\_id, seat\_id)}.
+Det vigtigste tekniske problem er, at to brugere ikke må kunne booke det samme sæde samtidigt. Det løses i databasen og booking-servicen gennem transaktioner og en unik databasebegrænsning på \code{(event\_id, seat\_id)}.
 
 Systemet er bygget som en full-stack webapplikation med en tydelig klient/server-opdeling. Frontenden er en React-applikation i Client-Side Rendering (CSR). Backend er opdelt i tre Spring Boot-services: \code{auth-service}, \code{event-service} og \code{booking-service}. En Nginx gateway samler frontend og API'er under ét origin. Alle services bruger samme PostgreSQL-database, men tabelejerskab er stadig delt logisk mellem services.
 
-\textbf{Kort status.} Projektet dækker de vigtigste kursusemner: serviceopdelt backend, REST/JSON, sikkerhed, Docker Compose, PostgreSQL, test, CI, deployment-runbook, CSR/SSR-valg og concurrency control.
+\textbf{Kort status.} Projektet dækker de vigtigste kursusemner: serviceopdelt backend, REST/JSON, sikkerhed, Docker Compose, PostgreSQL, test, CI, deployment-runbook, CSR/SSR-valg og beskyttelse mod dobbeltbooking.
 
 \section{Bæredygtighedsvalg}
 
@@ -168,7 +169,7 @@ Brugergrænsefladen bruger semantiske HTML-elementer, tydelige labels, beskytted
 
 Projektet blev lavet iterativt. Vi arbejdede med små leverancer, hvor hver iteration skulle ende med noget, der faktisk kunne testes. Først byggede vi login og eventvisning, derefter booking, og til sidst admin-flow, venteliste, sikkerhed og deploymentdokumentation.
 
-Gruppen startede med tre personer, men endte med to. Derfor blev scope justeret, så vi prioriterede kursuskravene og concurrency-delen frem for ekstra features, som ikke var nødvendige for projektet.
+Gruppen startede med tre personer, men endte med to. Derfor blev scope justeret, så vi prioriterede kursuskravene og beskyttelsen mod dobbeltbooking frem for ekstra features, som ikke var nødvendige for projektet.
 
 Den overordnede fremdrift var:
 
@@ -182,7 +183,7 @@ Periode & Mål \\
 Uge 1--3 & Repo, Docker Compose, PostgreSQL, auth-service og første frontend-flow. \\
 Uge 4--6 & Event-service, booking-service, single-seat booking og sædevisning. \\
 Uge 7--9 & Multi-seat booking, venteliste, admin-panel, e-mailbeskeder og gateway. \\
-Uge 10--12 & Sikkerhed, CI, smoke tests, concurrency demo, deployment-runbook og rapport. \\
+Uge 10--12 & Sikkerhed, CI, smoke-test, samtidighedstest, deployment-runbook og rapport. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -264,8 +265,8 @@ Lektion 05 & JSON bruges til request- og response-bodies i API'erne. \\
 Lektion 06 & REST med ressource-URI'er, HTTP-verber og statuskoder. API'et sigter mod Richardson Level 2. \\
 Lektion 07 & GraphQL blev valgt fra, fordi REST passer bedre til bookingflowets simple ressourcer og tydelige konfliktsvar. \\
 Lektion 08 & CSR blev valgt, fordi appen er loginbaseret, interaktionstung og ikke afhænger af SEO. \\
-Lektion 09--10 & Frontenden bruger React Router, TanStack Query, typed API-klient, responsive layout og komponenttests. \\
-Lektion 13 & Projektet har backend-tests, frontend-tests, smoke script, concurrency script, baseline script og GitHub Actions. \\
+Lektion 09--10 & Frontend- og driftsemner er brugt i routing, komponentopdeling, Docker Compose og deployment-runbook. \\
+Lektion 13 & Projektet har backend-tests, frontend-tests, smoke-test, samtidighedstest, baseline-script og GitHub Actions. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -292,11 +293,12 @@ Databasen bruger UUID'er som primærnøgler og \code{TIMESTAMPTZ} til tidsstempl
 \draw[rel] (seats) -- node[below]{reserved by} (bookings);
 \draw[rel] (users) -- (waitlist);
 \draw[rel] (events) -- (waitlist);
+\draw[rel, dashed] (bookings) -- node[left]{kan oprette} (email);
 \end{tikzpicture}
 \caption{Forenklet datamodel}
 \end{figure}
 
-\subsection{Concurrency-strategi}
+\subsection{Strategi mod dobbeltbooking}
 
 Strategien mod dobbeltbooking har tre lag:
 
@@ -360,7 +362,7 @@ private ResponseCookie buildAuthCookie(String value, Duration maxAge) {
 
 Rollebaseret adgangskontrol håndhæves i Spring Security med rollerne \code{USER} og \code{ADMIN}. Admin-routes er kun tilgængelige for brugere med \code{ADMIN}.
 
-\subsubsection{Booking og concurrency-guard}
+\subsubsection{Booking og beskyttelse mod dobbeltbooking}
 
 Booking-service finder selv brugerens id ud fra login-tokenet. Brugeren kan derfor ikke sende et andet bruger-id i requesten. Ved booking tjekker servicen først eventet og sædet. Derefter forsøger den at gemme bookingen. Ved multi-seat booking gemmes alle valgte sæder samlet. Hvis ét af sæderne allerede er taget, bliver hele bookingen afvist.
 
@@ -388,11 +390,11 @@ public List<BookingReservation> reserveSeats(
 
 Når et event er udsolgt, kan brugere tilmelde sig venteliste. Brugeren kan kun være på venteliste én gang per event, fordi databasen har en unik begrænsning på \code{(user\_id, event\_id)}.
 
-E-mailbeskeder gemmes i \code{email\_outbox}. Systemet sender ikke rigtige e-mails, men gemmer de beskeder, der ville være sendt ved booking, annullering og ventelistenotifikation. Det er nok til demoen og kræver ikke en ekstern mailtjeneste.
+E-mailbeskeder gemmes i \code{email\_outbox} og systemet sender derfor ikke rigtige e-mails, men gemmer de beskeder, der ville være sendt ved booking, annullering og ventelistenotifikation. Det er nok til demoen og kræver ikke en ekstern mailtjeneste.
 
 \subsubsection{Event lifecycle}
 
-Admin kan oprette, redigere, publicere, afpublicere, annullere og slette events. Events har statusværdierne \code{UNPUBLISHED}, \code{PUBLISHED} og \code{CANCELED}. Public event-listen viser kun publicerede og ikke-slettede events. Admin-dashboardet kan se alle ikke-slettede events.
+Admin kan oprette, redigere, publicere, afpublicere, annullere og slette events, hvor events har statusværdierne \code{UNPUBLISHED}, \code{PUBLISHED} og \code{CANCELED}. Public event-listen viser kun publicerede og ikke-slettede events. Admin-dashboardet kan se alle ikke-slettede events.
 
 Kapacitet kan øges ved at generere nye sæder. Reduktion blokeres, hvis det ville fjerne et allerede booket sæde. Sletning blokeres, hvis eventet har bookinger eller ventelisteindgange.
 
@@ -411,7 +413,7 @@ Frontenden bruger React Router til siderne og TanStack Query til data fra server
 
 \subsection{Brugerflow i appen}
 
-Det normale brugerflow starter på forsiden, hvor brugeren enten kan gennemse events eller logge ind. Forsiden forklarer kort, at systemet handler om eventbooking, sædevalg og concurrency-sikkerhed.
+Det normale brugerflow starter på forsiden, hvor brugeren enten kan gennemse events eller logge ind. Forsiden forklarer kort, at systemet handler om eventbooking, sædevalg og beskyttelse mod dobbeltbooking.
 
 \flowimage{docs/pics/flow-01-landing.png}{Forside}{Forsiden samler de vigtigste indgange: eventlisten, login og oprettelse af konto.}
 
@@ -530,7 +532,7 @@ Disse målinger giver et udgangspunkt, som kan bruges, hvis man senere vil optim
 
 Projektet har health checks og scripts, men ikke et fuldt monitoreringssystem. I en større driftssituation ville næste trin være fælles logs, simple alarmer og løbende målinger af svartider og fejl.
 
-\section{Afprøvning}
+\section{Tests}
 
 \subsection{Backend-tests}
 
@@ -540,7 +542,7 @@ Backend-tests er skrevet med JUnit 5, Spring Boot Test og Testcontainers. De tes
   \item auth-flow med registrering, login, logout, \code{/me} og CSRF
   \item event-oprettelse, statusændringer, kapacitetsændring og adgangskontrol
   \item booking, multi-seat booking, cancellation, waitlist og admin bookingoversigt
-  \item databaseintegritet og concurrency-relevante fejlscenarier
+  \item databaseintegritet og fejlscenarier med dobbeltbooking
 \end{itemize}
 
 Testcontainers kræver Docker-adgang i testmiljøet. Derfor er GitHub Actions det bedste sted at dokumentere, at hele backend-testpakken kan køre.
@@ -623,9 +625,9 @@ Miljøspecifikke værdier som database-login, JWT-secret, allowed origins, cooki
 
 \section{Konklusion}
 
-Vi har udviklet et distribueret event-bookingsystem med React CSR-frontend, tre Spring Boot-services, Nginx gateway, PostgreSQL, Flyway-migrationer, Docker Compose og CI. Systemet er ikke kun en prototype med statiske data; det har rigtige brugerflows, databasepersistens, login, rollebaseret adgang, adminfunktioner, venteliste og bookinglogik.
+Vi har udviklet et distribueret event-bookingsystem med React CSR-frontend, tre Spring Boot-services, Nginx gateway, PostgreSQL, Flyway-migrationer, Docker Compose og CI. Systemet er ikke kun en prototype med statiske data, da det har rigtige brugerflows, databasepersistens, login, rollebaseret adgang, adminfunktioner, venteliste og bookinglogik.
 
-Den vigtigste del af projektet er concurrency-løsningen for sædebooking. Ved at kombinere transaktionelle writes med en unik databasebegrænsning kan systemet afvise dobbeltbooking, selv når to brugere forsøger at booke samme sæde samtidigt. Det er også derfor, concurrency-demoen er en central del af projektet: den viser, at løsningen ikke kun virker i brugergrænsefladen, men også når to requests rammer backend næsten samtidigt.
+Den vigtigste del af projektet er beskyttelsen mod dobbeltbooking. Ved at kombinere transaktionelle skrivninger med en unik databasebegrænsning kan systemet afvise en ekstra booking, selv når to brugere forsøger at booke samme sæde samtidigt. Samtidighedstesten viser derfor noget vigtigt: løsningen virker ikke kun i brugergrænsefladen, men også når to forespørgsler rammer backend næsten samtidigt.
 
 Projektet viser også de valg, som kurset har fokuseret på. Vi bruger JSON og REST frem for GraphQL, fordi bookingflowet passer godt til simple endpoints og tydelige HTTP-statuskoder. Vi bruger CSR, fordi applikationen primært er loginbaseret og interaktiv. Vi bruger Docker Compose og en gateway, så systemet kan startes samlet og testes som en helhed.
 
